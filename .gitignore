@@ -1,0 +1,9 @@
+# real data must never be committed
+*.xlsx
+*.xls
+backup-*.json
+*.bak
+# only the synthetic seed is allowed
+!sample-data/demo-db.json
+.DS_Store
+__pycache__/

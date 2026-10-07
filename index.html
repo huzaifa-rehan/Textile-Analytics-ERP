@@ -1,0 +1,2692 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Yarn Dispatch Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+
+<style>
+:root{
+  --bg:#F4F3EF; --surface:#FFFFFF; --surface-2:#FAF9F5; --surface-3:#EFEDE6;
+  --border:#E2DFD7; --border-strong:#C9C4B8;
+  --text:#191F2E; --muted:#636A7E; --faint:#8A90A1;
+  --accent:#2E4A7D; --accent-2:#3D63A4; --accent-soft:#E7EDF7; --accent-line:#AFC3E1;
+  --brass:#8C6A24; --brass-soft:#F2EAD8; --brass-line:#D9C89C;
+  --ok:#2A6E51; --ok-soft:#E1EFE9;
+  --warn:#8B6212; --warn-soft:#F6EEDA;
+  --crit:#A0413A; --crit-soft:#F7E6E3;
+  --shadow-sm:0 1px 2px rgba(25,31,46,.06);
+  --shadow:0 1px 3px rgba(25,31,46,.07), 0 12px 28px -16px rgba(25,31,46,.22);
+  --radius:12px;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E121B; --surface:#151A25; --surface-2:#1A2030; --surface-3:#232A3A;
+    --border:#28303F; --border-strong:#3B4559;
+    --text:#E9EBF1; --muted:#98A0B4; --faint:#79809A;
+    --accent:#8AACE6; --accent-2:#A8C3F0; --accent-soft:#1A2740; --accent-line:#33456B;
+    --brass:#D4A85E; --brass-soft:#2A2214; --brass-line:#4A3A1D;
+    --ok:#6FC49B; --ok-soft:#14281F;
+    --warn:#E0B45F; --warn-soft:#2A2214;
+    --crit:#E5897C; --crit-soft:#2D1A18;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --shadow:0 1px 3px rgba(0,0,0,.45), 0 14px 32px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E121B; --surface:#151A25; --surface-2:#1A2030; --surface-3:#232A3A;
+  --border:#28303F; --border-strong:#3B4559;
+  --text:#E9EBF1; --muted:#98A0B4; --faint:#79809A;
+  --accent:#8AACE6; --accent-2:#A8C3F0; --accent-soft:#1A2740; --accent-line:#33456B;
+  --brass:#D4A85E; --brass-soft:#2A2214; --brass-line:#4A3A1D;
+  --ok:#6FC49B; --ok-soft:#14281F;
+  --warn:#E0B45F; --warn-soft:#2A2214;
+  --crit:#E5897C; --crit-soft:#2D1A18;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow:0 1px 3px rgba(0,0,0,.45), 0 14px 32px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600;letter-spacing:-.012em;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:var(--brass);font-weight:600}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:238px 1fr;min-height:100vh}
+.rail{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.brand .mark{font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.02em;display:block;line-height:1.2}
+.brand .rule{width:34px;height:2px;background:var(--brass);margin:9px 0 7px;border-radius:2px}
+.brand .sub{font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.nav{padding:14px 11px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:auto}
+.nav button{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;background:none;border:0;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:500;text-align:left;position:relative}
+.nav button:hover{background:var(--surface-2);color:var(--text)}
+.nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav button[aria-current="page"]::before{content:"";position:absolute;left:-11px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.nav .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:500}
+.railfoot{padding:13px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.savechip{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.savedot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.savechip[data-state="saving"] .savedot{background:var(--warn);animation:pulse 1s ease-in-out infinite}
+.savechip[data-state="error"] .savedot{background:var(--crit)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.themebtn{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border-strong);background:var(--surface-2);border-radius:8px;cursor:pointer;font-size:12px;color:var(--muted);width:100%}
+.themebtn:hover{color:var(--text);border-color:var(--faint)}
+.themebtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:16px 28px 15px;display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.topbar h1{font-size:23px;line-height:1.2}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.content{padding:22px 28px 64px;display:flex;flex-direction:column;gap:22px}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-weight:500;font-size:13px;cursor:pointer;box-shadow:var(--shadow-sm)}
+.btn:hover{background:var(--surface-2);border-color:var(--faint)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn-primary{color:#0E121B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-primary{color:#0E121B}}
+.btn-primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn-sm{padding:5px 9px;font-size:12px;border-radius:6px;box-shadow:none}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--muted);box-shadow:none}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-danger{color:var(--crit)}
+.btn-danger:hover{background:var(--crit-soft);border-color:var(--crit)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn:disabled{opacity:.4;cursor:default}
+
+label.field{display:flex;flex-direction:column;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{padding:9px 11px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);font-size:13.5px;font-weight:400;letter-spacing:0;text-transform:none;width:100%}
+input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+input[readonly]{background:var(--surface-3);color:var(--muted)}
+.filterbar{display:flex;gap:13px;flex-wrap:wrap;align-items:flex-end;padding:15px 17px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.filterbar label.field{min-width:150px;flex:1 1 160px}
+.filterbar .grow{flex:2 1 230px}
+
+/* combobox */
+.combo{position:relative}
+.combo input{padding-right:28px}
+.combo .clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--faint);cursor:pointer;padding:2px 4px;line-height:1;font-size:15px;border-radius:4px}
+.combo .clear:hover{color:var(--text);background:var(--surface-3)}
+.combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface);border:1px solid var(--border-strong);border-radius:9px;box-shadow:var(--shadow);max-height:264px;overflow:auto;padding:4px}
+.combo-item{padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo-item:hover,.combo-item.on{background:var(--accent-soft);color:var(--accent)}
+.combo-item mark{background:transparent;color:var(--brass);font-weight:600}
+.combo-empty{padding:9px 10px;font-size:12.5px;color:var(--muted)}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.card-head{padding:15px 19px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.card-head h2{font-size:15.5px}
+.card-head .hint{font-size:12px;color:var(--muted);margin-left:auto}
+.card-body{padding:19px}
+.sechead{display:flex;align-items:baseline;gap:12px;margin-bottom:-6px}
+.sechead h2{font-size:14px}
+.sechead .line{flex:1;height:1px;background:var(--border)}
+.sechead .note{font-size:11.5px;color:var(--faint)}
+
+/* ---------- tiles ---------- */
+.tiles{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.tiles.t4{grid-template-columns:repeat(4,1fr)}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tiles.t2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:1100px){.tiles.t4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.tiles.t4,.tiles.t3,.tiles.t2{grid-template-columns:1fr}}
+.tile{background:var(--surface);padding:16px 18px 17px;display:flex;flex-direction:column;gap:4px;position:relative}
+.tile .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--mono);font-size:27px;font-weight:500;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .u{font-size:11.5px;color:var(--faint)}
+.tile.accent{background:linear-gradient(180deg,var(--accent-soft),var(--surface) 72%)}
+.tile.accent .v{color:var(--accent)}
+.tile.accent::before{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--accent)}
+.tile.brassy::before{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--brass)}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.b-open{background:var(--accent-soft);color:var(--accent)}
+.b-done{background:var(--ok-soft);color:var(--ok)}
+.b-closed{background:var(--surface-3);color:var(--muted)}
+.chip{display:inline-block;padding:1px 7px;border-radius:5px;background:var(--brass-soft);color:var(--brass);font-family:var(--mono);font-size:11px;font-weight:500;border:1px solid var(--brass-line)}
+.chip.col{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);font-family:var(--sans);font-weight:600}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 13px;border-bottom:1px solid var(--border-strong);white-space:nowrap;background:var(--surface-2);position:sticky;top:0;z-index:1}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+tfoot th{position:static;background:var(--surface-3);border-top:2px solid var(--accent);border-bottom:0;font-size:11px;color:var(--text);text-transform:none;letter-spacing:0}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:var(--mono);font-size:12.5px}
+tr.clickable{cursor:pointer}
+tr.clickable:hover{background:var(--accent-soft)}
+tr.stripe td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+tr.stripe-ok td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+tr.stripe-off td:first-child{box-shadow:inset 3px 0 0 var(--border-strong)}
+.rowbtn{opacity:.3;transition:opacity .12s}
+tr:hover .rowbtn{opacity:1}
+.empty{padding:48px 22px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--text);font-family:var(--serif);font-size:16px;margin-bottom:5px}
+.pager{display:flex;align-items:center;gap:11px;padding:12px 17px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted);flex-wrap:wrap;background:var(--surface-2)}
+.pager .spacer{margin-left:auto}
+
+.prog{height:7px;border-radius:99px;background:var(--surface-3);overflow:hidden;min-width:80px;flex:1}
+.prog span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.prog.full span{background:var(--ok)}
+
+/* ---------- charts ---------- */
+.chartwrap{position:relative}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--border);stroke-width:1}
+.chart .axis{fill:var(--faint);font-family:var(--mono);font-size:10px}
+.chart .bar{fill:var(--accent)}
+.chart .bar-out{fill:var(--accent)}
+.chart .bar-in{fill:var(--brass)}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.legend .sw.in{background:var(--brass)}
+.legend .sw.out{background:var(--accent)}
+.tip{position:absolute;pointer-events:none;background:var(--text);color:var(--bg);padding:7px 10px;border-radius:7px;font-size:11.5px;font-family:var(--mono);white-space:nowrap;opacity:0;transform:translate(-50%,-118%);transition:opacity .1s;z-index:5;box-shadow:var(--shadow)}
+.tip.on{opacity:1}
+.ranklist{display:flex;flex-direction:column;gap:11px}
+.rankrow{display:grid;grid-template-columns:minmax(0,1.05fr) 1.5fr auto;gap:13px;align-items:center}
+.rankrow .rl{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rankrow .rb{height:13px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.rankrow .rb i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.rankrow .rv{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;min-width:66px}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,14,24,.55);z-index:40;backdrop-filter:blur(2px)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(880px,97vw);background:var(--bg);border-left:1px solid var(--border);z-index:41;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.drawer-head{padding:18px 24px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;gap:14px;align-items:flex-start;flex:none}
+.drawer-head h2{font-size:19px}
+.drawer-body{padding:20px 24px 48px;overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
+.drawer-body>*{flex:0 0 auto}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:15px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.kv div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.kv .k{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kv .v{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+
+/* in-app dialogs — the artifact frame blocks confirm()/prompt()/alert() */
+.modalwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,14,24,.55);backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border:1px solid var(--border-strong);border-radius:14px;box-shadow:var(--shadow);max-width:460px;width:100%;overflow:hidden}
+.modal h3{font-family:var(--serif);font-size:17px;padding:18px 20px 0}
+.modal .mb{padding:9px 20px 18px;color:var(--muted);font-size:13.5px}
+.modal .mb strong{color:var(--text)}
+.modal .mf{display:flex;gap:9px;justify-content:flex-end;padding:14px 18px;background:var(--surface-2);border-top:1px solid var(--border)}
+.modal input{margin-top:4px}
+.btn-crit{background:var(--crit);border-color:var(--crit);color:#fff}
+.btn-crit:hover{background:var(--crit);opacity:.9}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:9px;font-size:13px;z-index:60;opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;max-width:90vw;box-shadow:var(--shadow)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:14px}
+.subnav{display:flex;gap:4px;border-bottom:1px solid var(--border);padding:0 6px;background:var(--surface-2)}
+.subnav button{padding:11px 14px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:500;cursor:pointer;font-size:13px}
+.subnav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.subnav.page{border:1px solid var(--border);border-radius:var(--radius);padding:0 8px;box-shadow:var(--shadow-sm);margin-bottom:-4px}
+.subnav .tabct{margin-left:7px;font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:500}
+.subnav button[aria-selected="true"] .tabct{color:var(--accent)}
+.listedit{display:flex;flex-direction:column;max-height:440px;overflow:auto}
+.listedit .row{display:flex;align-items:center;gap:9px;padding:7px 16px;border-bottom:1px solid var(--border)}
+.listedit .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listedit .row .ct{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.hint{font-size:12px;color:var(--muted)}
+.notice{padding:13px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface-2);color:var(--muted);font-size:12.5px}
+textarea{min-height:64px;resize:vertical;font-family:inherit}
+/* bag ledger */
+.bagtable{width:100%;border-collapse:collapse}
+.bagtable th{padding:8px 10px;font-size:10px}
+.bagtable td{padding:4px 6px;border-bottom:1px solid var(--border)}
+.bagtable td input{padding:7px 9px;font-size:14px;font-weight:500;border-radius:6px;font-family:var(--mono)}
+.bagtable td.ix{width:44px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--muted)}
+.bagtable td.rm{width:40px;text-align:right}
+.bagfoot{display:flex;gap:26px;align-items:center;flex-wrap:wrap;padding:14px 18px;background:var(--surface-2);border-top:1px solid var(--border-strong)}
+.bagfoot .ft{display:flex;flex-direction:column;gap:1px}
+.bagfoot .ft .k{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.bagfoot .ft .v{font-family:var(--mono);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.bagfoot .grow{margin-left:auto}
+.quickbar{display:flex;align-items:center;gap:11px;padding:15px 18px;background:var(--accent-soft);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.quickbar .ql{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.quickin{flex:0 0 210px;font-family:var(--mono);font-size:20px;font-weight:600;padding:10px 13px;letter-spacing:.02em;
+  border:2px solid var(--accent);border-radius:9px;background:var(--surface)}
+.quickin:focus{box-shadow:0 0 0 4px var(--accent-soft)}
+.quickin.bad{border-color:var(--crit);background:var(--crit-soft)}
+.quicknote{flex:1 1 100%;font-size:12px;color:var(--muted)}
+.formerr{flex:1 1 100%;margin-top:10px;padding:10px 13px;border-radius:8px;background:var(--crit-soft);
+  border:1px solid var(--crit);color:var(--crit);font-size:13px;font-weight:600}
+input.bad,textarea.bad{border-color:var(--crit)!important;background:var(--crit-soft);box-shadow:0 0 0 3px var(--crit-soft)}
+label.field.req>span.rq{color:var(--crit);margin-left:3px}
+.hasbags{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--brass);margin-left:6px;vertical-align:middle}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}
+  .nav{flex-direction:row;overflow-x:auto;padding:9px}
+  .nav button{white-space:nowrap}
+  .nav button[aria-current="page"]::before{display:none}
+  .nav .count{display:none}
+  .railfoot{flex-direction:row;align-items:center}
+  .topbar,.content{padding-left:16px;padding-right:16px}
+}
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <span class="mark">Demo Yarn Mills</span>
+      <div class="rule"></div>
+      <span class="sub">Dispatch Desk</span>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="railfoot">
+      <button class="themebtn" id="themeBtn" type="button"></button>
+      <div class="savechip" id="saveChip" data-state="idle"><span class="savedot"></span><span id="saveText">Loading…</span></div>
+      <div class="hint" id="dbInfo" style="font-size:11px"></div>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow" id="viewEyebrow">Sales &amp; Dispatch</div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <div class="sub" id="viewSub"></div>
+      </div>
+      <div class="actions" id="viewActions"></div>
+    </header>
+    <div class="content" id="viewRoot">
+      <div class="card"><div class="empty">Connecting to your data…</div></div>
+    </div>
+  </main>
+</div>
+<div id="drawerHost"></div>
+<div class="toast" id="toast"></div>
+
+<script src="local-db.js"></script>
+<script>
+"use strict";
+const KG_TO_LBS=2.20462;
+const MONTHS_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const COMPANY="DEMO YARN MILLS";
+const COMPANY_SUB="Demo Yarn Mills Pvt Ltd · Anytown";
+
+/* ============ ZIP + XLSX ============ */
+const CRC_T=(()=>{const t=new Int32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}return t;})();
+function crc32(u8){let c=-1;for(let i=0;i<u8.length;i++)c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);return(c^-1)>>>0;}
+const TE=new TextEncoder();
+function zipStore(files){
+  const parts=[],central=[];let off=0;
+  const u16=n=>[n&255,(n>>8)&255],u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  for(const f of files){
+    const name=TE.encode(f.name),data=f.data,crc=crc32(data);
+    const lh=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0)]);
+    parts.push(lh,name,data);
+    central.push(new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(0),...u32(off)]),name);
+    off+=lh.length+name.length+data.length;
+  }
+  let cd=0;for(const c of central)cd+=c.length;
+  const eocd=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cd),...u32(off),...u16(0)]);
+  return new Blob([...parts,...central,eocd],{type:"application/zip"});
+}
+const xe=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
+const colName=n=>{let s="";n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-m-1)/26;}return s;};
+const dateSerial=iso=>{if(!iso)return null;const[y,m,d]=iso.split("-").map(Number);return Math.round((Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/86400000);};
+const XL_STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0"/><numFmt numFmtId="165" formatCode="#,##0.00"/><numFmt numFmtId="166" formatCode="dd\\-mmm\\-yyyy"/></numFmts>
+<fonts count="6"><font><sz val="11"/><color rgb="FF1A2030"/><name val="Calibri"/></font>
+<font><b/><sz val="18"/><color rgb="FF1F3864"/><name val="Calibri"/></font>
+<font><b/><sz val="12"/><color rgb="FF1A2030"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><i/><sz val="10"/><color rgb="FF7A7A7A"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF1F3864"/><name val="Calibri"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF1F3864"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFEFF3FA"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left/><right/><top/><bottom style="thin"><color rgb="FFDCDCDC"/></bottom><diagonal/></border>
+<border><left/><right/><top style="medium"><color rgb="FF1F3864"/></top><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="12">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="5" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="5" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="5" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const ST={TITLE:1,H2:2,SUB:3,HEAD:4,TXT:5,INT:6,DEC:7,DATE:8,TOTL:9,TOTI:10,TOTD:11};
+function xcell(ref,style,val,type){
+  if(val==null||val==="")return `<c r="${ref}" s="${style}"/>`;
+  if(type==="n")return `<c r="${ref}" s="${style}"><v>${val}</v></c>`;
+  return `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xe(val)}</t></is></c>`;
+}
+function buildXlsx({sheetName,title,context,cols,rows,totals}){
+  const R=[];let r=1;
+  const push=c=>{R.push(`<row r="${r}">${c}</row>`);r++;};
+  push(xcell("A1",ST.TITLE,COMPANY+" — MAZHAR SONS TEXTILES"));
+  push(xcell("A2",ST.H2,title));
+  push(xcell("A3",ST.SUB,context||""));
+  push("");
+  const headRow=r;
+  push(cols.map((c,i)=>xcell(colName(i)+r,ST.HEAD,c.label)).join(""));
+  const first=r;
+  for(const row of rows){
+    push(cols.map((c,i)=>{
+      const ref=colName(i)+r,v=row[c.key];
+      if(c.type==="date")return xcell(ref,ST.DATE,dateSerial(v),"n");
+      if(c.type==="int")return (v==null||v==="")?xcell(ref,ST.INT,null):xcell(ref,ST.INT,v,"n");
+      if(c.type==="dec")return (v==null||v==="")?xcell(ref,ST.DEC,null):xcell(ref,ST.DEC,Math.round(v*100)/100,"n");
+      return xcell(ref,ST.TXT,v);
+    }).join(""));
+  }
+  const last=r-1;
+  if(totals)push(cols.map((c,i)=>{
+    const ref=colName(i)+r;
+    if(i===0)return xcell(ref,ST.TOTL,"TOTAL");
+    const v=totals[c.key];
+    if(v==null)return xcell(ref,ST.TOTL,null);
+    if(c.type==="int")return xcell(ref,ST.TOTI,v,"n");
+    if(c.type==="dec")return xcell(ref,ST.TOTD,Math.round(v*100)/100,"n");
+    return xcell(ref,ST.TOTL,v);
+  }).join(""));
+  const lastRow=r-1,lastCol=colName(cols.length-1);
+  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<dimension ref="A1:${lastCol}${lastRow}"/>
+<sheetViews><sheetView showGridLines="0" tabSelected="1" workbookViewId="0">
+<pane ySplit="${headRow}" topLeftCell="A${headRow+1}" activePane="bottomLeft" state="frozen"/>
+<selection pane="bottomLeft" activeCell="A${headRow+1}" sqref="A${headRow+1}"/></sheetView></sheetViews>
+<sheetFormatPr defaultRowHeight="15"/>
+<cols>${cols.map((c,i)=>`<col min="${i+1}" max="${i+1}" width="${c.width||14}" customWidth="1"/>`).join("")}</cols>
+<sheetData>${R.join("")}</sheetData>
+${last>=first?`<autoFilter ref="A${headRow}:${lastCol}${last}"/>`:""}
+<mergeCells count="3"><mergeCell ref="A1:${lastCol}1"/><mergeCell ref="A2:${lastCol}2"/><mergeCell ref="A3:${lastCol}3"/></mergeCells>
+<pageMargins left="0.4" right="0.4" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>
+<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+  const f=(n,s)=>({name:n,data:TE.encode(s)});
+  return zipStore([
+    f("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`),
+    f("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`),
+    f("xl/workbook.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="${xe((sheetName||"Report").slice(0,31))}" sheetId="1" r:id="rId1"/></sheets></workbook>`),
+    f("xl/_rels/workbook.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`),
+    f("xl/styles.xml",XL_STYLES),
+    f("xl/worksheets/sheet1.xml",sheet)]);
+}
+
+/* ============ state ============ */
+const S={
+  db:null,downloads:null,ready:false,loadError:"",view:"dashboard",histLoaded:false,histPromise:null,
+  months:new Map(),orders:[],clients:[],items:[],meta:{},rowsCache:null,
+  pmonths:new Map(),porders:[],suppliers:[],pitems:[],colors:[],pRowsCache:null,
+  sec:{sales:"register",purchase:"register"},
+  dash:{client:"",item:"",from:"",to:""},
+  del:{q:"",client:"",item:"",from:"",to:"",page:1,size:50},
+  ord:{q:"",show:"open"},
+  pur:{q:"",supplier:"",item:"",color:"",from:"",to:"",page:1,size:50},
+  pord:{q:"",show:"open"},
+  rep:{tab:"client",client:"",from:"",to:""},
+  setup:{tab:"clients"},
+  writeQueue:Promise.resolve(),
+};
+const $=s=>document.querySelector(s);
+const el=(t,a,...kids)=>{const n=document.createElement(t);
+  for(const[k,v]of Object.entries(a||{})){if(v==null||v===false)continue;
+    if(k==="class")n.className=v;else if(k==="html")n.innerHTML=v;
+    else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);
+    else n.setAttribute(k,v===true?"":v);}
+  for(const k of kids.flat()){if(k==null||k===false)continue;n.append(k.nodeType?k:document.createTextNode(k));}
+  return n;};
+const nf=(n,d=0)=>(n==null||isNaN(n))?"—":Number(n).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtDate=s=>{if(!s)return"—";const[y,m,d]=s.split("-");return `${d} ${MONTHS_SHORT[+m-1]} ${y}`;};
+const monthLabel=m=>{const[y,mm]=m.split("-");return `${MONTHS_SHORT[+mm-1]} ${y.slice(2)}`;};
+const monthFull=m=>{const[y,mm]=m.split("-");return `${MONTHS_SHORT[+mm-1]} ${y}`;};
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
+const sum=(rows,k)=>rows.reduce((s,r)=>s+(r[k]||0),0);
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2800);}
+
+/* The artifact runs in a sandboxed frame where confirm/prompt/alert never
+   appear, so every dialog is built in-page and returns a promise. */
+function dialog({title,body,fields,okLabel,danger,cancel=true}){
+  return new Promise(resolve=>{
+    const inputs={};
+    const mb=el("div",{class:"mb"});
+    if(body)mb.append(el("div",null,body));
+    if(fields)fields.forEach(f=>{
+      const i=el("input",{value:f.value||"",placeholder:f.placeholder||""});
+      inputs[f.key]=i;
+      mb.append(el("label",{class:"field",style:"margin-top:12px"},f.label,i));
+    });
+    const close=v=>{wrap.remove();document.removeEventListener("keydown",key);resolve(v);};
+    const okBtn=el("button",{class:"btn "+(danger?"btn-crit":"btn-primary"),
+      onclick:()=>close(fields?Object.fromEntries(Object.entries(inputs).map(([k,i])=>[k,i.value.trim()])):true)});
+    okBtn.textContent=okLabel||"OK";
+    const wrap=el("div",{class:"modalwrap",onclick:e=>{if(e.target===wrap&&cancel)close(null);}},
+      el("div",{class:"modal",role:"dialog","aria-modal":"true"},
+        el("h3",null,title),mb,
+        el("div",{class:"mf"},
+          cancel?el("button",{class:"btn",onclick:()=>close(null)},"Cancel"):null,okBtn)));
+    function key(e){
+      if(e.key==="Escape"&&cancel){e.stopPropagation();close(null);}
+      else if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"){e.preventDefault();okBtn.click();}
+    }
+    document.addEventListener("keydown",key);
+    document.body.append(wrap);
+    const first=wrap.querySelector("input")||okBtn;first.focus();
+    if(first.select)first.select();
+  });
+}
+const ask=(title,body,okLabel,danger)=>dialog({title,body,okLabel:okLabel||"Confirm",danger});
+const note=(title,body)=>dialog({title,body,okLabel:"Got it",cancel:false});
+const askText=(title,label,value)=>dialog({title,okLabel:"Save",fields:[{key:"v",label,value}]})
+  .then(r=>r?r.v:null);
+function setSave(st,tx){const c=$("#saveChip");c.dataset.state=st;$("#saveText").textContent=tx;}
+function allRows(){
+  if(S.rowsCache)return S.rowsCache;
+  const out=[];for(const m of S.months.values())for(const r of m.rows)out.push(r);
+  out.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.id<b.id?1:-1));
+  return S.rowsCache=out;
+}
+const invalidate=()=>{S.rowsCache=null;S.pRowsCache=null;};
+function allPRows(){
+  if(S.pRowsCache)return S.pRowsCache;
+  const out=[];for(const m of S.pmonths.values())for(const r of m.rows)out.push(r);
+  out.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.id<b.id?1:-1));
+  return S.pRowsCache=out;
+}
+
+/* ============ theme ============ */
+function initTheme(){
+  let t=null;try{t=localStorage.getItem("mzl-theme");}catch(e){}
+  if(t)document.documentElement.setAttribute("data-theme",t);
+  paintThemeBtn();
+}
+function currentTheme(){
+  const a=document.documentElement.getAttribute("data-theme");
+  if(a)return a;
+  return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";
+}
+function toggleTheme(){
+  const next=currentTheme()==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem("mzl-theme",next);}catch(e){}
+  paintThemeBtn();
+}
+function paintThemeBtn(){
+  const b=$("#themeBtn");if(!b)return;
+  const dark=currentTheme()==="dark";
+  b.textContent="";
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("viewBox","0 0 24 24");s.setAttribute("fill","none");s.setAttribute("stroke","currentColor");
+  s.setAttribute("stroke-width","1.6");s.setAttribute("stroke-linecap","round");
+  s.innerHTML=dark?'<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>'
+    :'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/>';
+  b.append(s,el("span",null,dark?"Switch to light":"Switch to dark"));
+}
+
+/* ============ persistence ============ */
+function enqueue(fn){
+  S.writeQueue=S.writeQueue.then(async()=>{
+    setSave("saving","Saving…");
+    try{await fn();setSave("idle","All changes saved");}
+    catch(e){console.error(e);setSave("error","Not saved — "+((e&&e.code)||"error"));toast("Could not save: "+((e&&e.message)||e));throw e;}
+  }).catch(()=>{});
+  return S.writeQueue;
+}
+const saveMonth=async k=>{const d=S.months.get(k);if(S.db&&d)await S.db.doc("deliveries/"+k).set({month:k,rows:d.rows,count:d.rows.length});};
+const saveOrderDoc=async o=>{if(S.db)await S.db.doc("orders/"+o.id).set(o);};
+const savePMonth=async k=>{const d=S.pmonths.get(k);if(S.db&&d)await S.db.doc("purchases/"+k).set({month:k,rows:d.rows,count:d.rows.length});};
+const savePOrderDoc=async o=>{if(S.db)await S.db.doc("porders/"+o.id).set(o);};
+/* One place that knows which reference list is which — the setup screen, the
+   type-aheads and the rename-everywhere routine all read from here. */
+const REFS={
+  clients:{get:()=>S.clients,set:v=>S.clients=v,field:"client",side:"sales",label:"Client"},
+  items:{get:()=>S.items,set:v=>S.items=v,field:"item",side:"sales",label:"Item"},
+  suppliers:{get:()=>S.suppliers,set:v=>S.suppliers=v,field:"supplier",side:"purchase",label:"Supplier"},
+  pitems:{get:()=>S.pitems,set:v=>S.pitems=v,field:"item",side:"purchase",label:"Purchase item"},
+  colors:{get:()=>S.colors,set:v=>S.colors=v,field:"color",side:"purchase",label:"Colour"},
+};
+const saveRefs=async w=>{if(S.db)await S.db.doc("refs/"+w).set({list:REFS[w].get(),updatedAt:todayISO()});};
+const saveMeta=async()=>{if(S.db)await S.db.doc("meta/info").set(S.meta);};
+/* Reference data first so the challan form is usable at once; the 94 months
+   of history stream in behind it and the views re-render when they land. */
+async function loadCore(){
+  const list=d=>(d.exists&&Array.isArray(d.data().list))?d.data().list.slice():[];
+  const[o,po,c,i,sup,pit,col,m]=await Promise.all([
+    S.db.collection("orders").get(),S.db.collection("porders").get(),
+    S.db.doc("refs/clients").get(),S.db.doc("refs/items").get(),
+    S.db.doc("refs/suppliers").get(),S.db.doc("refs/pitems").get(),S.db.doc("refs/colors").get(),
+    S.db.doc("meta/info").get()]);
+  S.orders=o.docs.map(x=>Object.assign({id:x.id},x.data()));
+  S.orders.sort((a,b)=>a.id<b.id?-1:1);
+  S.porders=po.docs.map(x=>Object.assign({id:x.id},x.data()));
+  S.porders.sort((a,b)=>a.id<b.id?-1:1);
+  S.clients=list(c);S.items=list(i);
+  S.suppliers=list(sup);S.pitems=list(pit);S.colors=list(col);
+  S.meta=(m.exists&&m.data())||{};
+}
+async function loadHistory(){
+  const[d,pu]=await Promise.all([S.db.collection("deliveries").get(),S.db.collection("purchases").get()]);
+  S.months=new Map();
+  d.docs.forEach(x=>{const v=x.data()||{};S.months.set(x.id,{month:x.id,rows:Array.isArray(v.rows)?v.rows.slice():[]});});
+  S.pmonths=new Map();
+  pu.docs.forEach(x=>{const v=x.data()||{};S.pmonths.set(x.id,{month:x.id,rows:Array.isArray(v.rows)?v.rows.slice():[]});});
+  S.histLoaded=true;invalidate();
+}
+const ensureHistory=()=>S.histLoaded?Promise.resolve():S.histPromise;
+
+/* ============ domain ============ */
+function orderMatches(o,r){
+  if(r.client!==o.client||r.item!==o.item)return false;
+  const lot=(o.lot||"").trim().toLowerCase();
+  if(lot&&!String(r.lot||"").toLowerCase().includes(lot))return false;
+  if(o.dateOpened&&r.date<o.dateOpened)return false;
+  if(o.closingDate&&r.date>o.closingDate)return false;
+  return true;
+}
+function orderStats(o){
+  const rows=allRows().filter(r=>orderMatches(o,r));
+  const bags=sum(rows,"bags"),lbs=sum(rows,"lbs"),kg=sum(rows,"kg");
+  const cb=o.contractedBags||0,cl=o.contractedLbs||0;
+  const pct=cl>0?Math.min(100,lbs/cl*100):(cb>0?Math.min(100,bags/cb*100):0);
+  return{rows,bags,lbs,kg,openBags:cb-bags,openLbs:cl-lbs,pct,done:(cb>0&&bags>=cb)||(cl>0&&lbs>=cl)};
+}
+const isClosed=o=>String(o.status).toLowerCase()==="closed";
+function orderBadge(o,st){
+  if(isClosed(o))return{cls:"b-closed",txt:"Closed",stripe:"stripe-off"};
+  if(st.done)return{cls:"b-done",txt:"Fulfilled",stripe:"stripe-ok"};
+  return{cls:"b-open",txt:"Open",stripe:"stripe"};
+}
+function filterRows({client,item,from,to,q}){
+  const ql=(q||"").trim().toLowerCase();
+  return allRows().filter(r=>{
+    if(client&&r.client!==client)return false;
+    if(item&&r.item!==item)return false;
+    if(from&&r.date<from)return false;
+    if(to&&r.date>to)return false;
+    if(ql&&!((r.client+" "+r.item+" "+(r.lot||"")+" "+(r.challan||"")+" "+(r.billty||"")).toLowerCase().includes(ql)))return false;
+    return true;
+  });
+}
+function filterContext(f){
+  const p=[];
+  if(f.client)p.push(f.client);if(f.item)p.push(f.item);
+  if(f.from||f.to)p.push((f.from?fmtDate(f.from):"start")+" to "+(f.to?fmtDate(f.to):"today"));
+  return p.length?p.join("  ·  "):"All clients · all items · full history";
+}
+
+/* ============ downloads ============ */
+async function download(filename,data){
+  if(!S.downloads){toast("Downloads aren't available in this view");return;}
+  try{await S.downloads.save({filename,data});toast("Saved "+filename);}
+  catch(e){if(e&&e.code==="declined")return;toast("Download failed: "+((e&&e.message)||e));}
+}
+const DEL_COLS=[{label:"Date",key:"date",type:"date",width:13},{label:"Challan No.",key:"challan",type:"text",width:13},
+  {label:"Client",key:"client",type:"text",width:32},{label:"PO / Contract",key:"po",type:"text",width:16},
+  {label:"Item / Yarn Spec",key:"item",type:"text",width:26},
+  {label:"Lot",key:"lot",type:"text",width:8},{label:"Cone Colour",key:"cone",type:"text",width:14},
+  {label:"Bags",key:"bags",type:"int",width:9},{label:"Cones",key:"cones",type:"int",width:10},
+  {label:"Weight (Kg)",key:"kg",type:"dec",width:13},{label:"Weight (Lbs)",key:"lbs",type:"dec",width:13},
+  {label:"Vehicle No.",key:"vehicle",type:"text",width:13},{label:"Billty No.",key:"billty",type:"text",width:12}];
+function exportDeliveriesXlsx(rows,title,context,filename){
+  const out=rows.map(r=>Object.assign({},r,{cones:rowCones(r)}));
+  download(filename,buildXlsx({sheetName:"Deliveries",title,context,cols:DEL_COLS,rows:out,
+    totals:{bags:sum(out,"bags"),cones:sum(out,"cones"),kg:sum(out,"kg"),lbs:sum(out,"lbs")}}));
+}
+function exportOrdersXlsx(){
+  const cols=[{label:"Order",key:"id",type:"text",width:12},{label:"PO / Contract",key:"po",type:"text",width:16},
+    {label:"Client",key:"client",type:"text",width:32},
+    {label:"Item",key:"item",type:"text",width:26},{label:"Lot",key:"lot",type:"text",width:8},
+    {label:"Opened",key:"dateOpened",type:"date",width:13},{label:"Status",key:"status",type:"text",width:11},
+    {label:"Contracted Bags",key:"contractedBags",type:"int",width:15},{label:"Delivered Bags",key:"dBags",type:"int",width:15},
+    {label:"Open Bags",key:"oBags",type:"int",width:12},{label:"Contracted Lbs",key:"contractedLbs",type:"dec",width:15},
+    {label:"Delivered Lbs",key:"dLbs",type:"dec",width:15},{label:"Open Lbs",key:"oLbs",type:"dec",width:13},
+    {label:"% Complete",key:"pct",type:"int",width:12}];
+  const rows=S.orders.map(o=>{const st=orderStats(o);
+    return Object.assign({},o,{dBags:st.bags,oBags:Math.max(0,st.openBags),dLbs:st.lbs,oLbs:Math.max(0,st.openLbs),pct:Math.round(st.pct)});});
+  download("yarn-order-book.xlsx",buildXlsx({sheetName:"Order Book",title:"Open Order Book",
+    context:"As at "+fmtDate(todayISO()),cols,rows,
+    totals:{contractedBags:sum(rows,"contractedBags"),dBags:sum(rows,"dBags"),oBags:sum(rows,"oBags"),
+      contractedLbs:sum(rows,"contractedLbs"),dLbs:sum(rows,"dLbs"),oLbs:sum(rows,"oLbs")}}));
+}
+
+/* ============ printable report ============ */
+function reportHTML({title,context,kpis,sections,footNote}){
+  const kpiHtml=kpis.map(k=>{
+    const body=k.pairs
+      ? k.pairs.map(p=>`<span class="row"><b>${xe(p.v)}</b><i>${xe(p.u||"")}</i></span>`).join("")
+      : `<span class="v">${xe(k.v)}</span><span class="u">${xe(k.u||"")}</span>`;
+    return `<div class="kpi"><span class="k">${xe(k.k)}</span>${body}</div>`;
+  }).join("");
+  const secHtml=sections.map(s=>{
+    if(s.note&&!s.rows.length)return `<section><h2>${xe(s.heading)}</h2><p class="note">${xe(s.note)}</p></section>`;
+    const head=s.cols.map(c=>`<th class="${c.align==="r"?"r":""}">${xe(c.label)}</th>`).join("");
+    const body=s.rows.map(r=>"<tr>"+s.cols.map(c=>`<td class="${c.align==="r"?"r":""}">${xe(c.fmt?c.fmt(r):r[c.key])}</td>`).join("")+"</tr>").join("");
+    const foot=s.totals?"<tfoot><tr>"+s.cols.map((c,i)=>`<th class="${c.align==="r"?"r":""}">${i===0?"TOTAL":xe(s.totals[c.key]==null?"":s.totals[c.key])}</th>`).join("")+"</tr></tfoot>":"";
+    return `<section><h2>${xe(s.heading)}</h2>${s.note?`<p class="note">${xe(s.note)}</p>`:""}
+      <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${foot}</table></section>`;
+  }).join("");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${xe(title)} — ${xe(COMPANY)}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#EFEEE9;color:#191F2E;font:14px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+.bar{position:sticky;top:0;background:#1F3864;color:#fff;padding:11px 20px;display:flex;gap:14px;align-items:center;font-size:13px}
+.bar button{background:#fff;color:#1F3864;border:0;padding:8px 16px;border-radius:7px;font:inherit;font-weight:600;cursor:pointer}
+.page{max-width:1040px;margin:22px auto;background:#fff;padding:44px 48px 54px;box-shadow:0 2px 18px rgba(0,0,0,.10)}
+header.lh{border-bottom:2.5px solid #1F3864;padding-bottom:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.co{font-family:"IBM Plex Serif",Georgia,serif;font-size:23px;font-weight:600;letter-spacing:-.02em;color:#1F3864}
+.co small{display:block;font-family:"IBM Plex Sans",sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8C6A24;font-weight:600;margin-top:5px}
+.meta{text-align:right;font-size:11.5px;color:#5A6072;line-height:1.7}
+h1{font-family:"IBM Plex Serif",Georgia,serif;font-size:20px;margin:20px 0 3px;font-weight:600}
+.ctx{font-size:12px;color:#5A6072;margin:0 0 22px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;background:#DCDAD3;border:1px solid #DCDAD3;margin-bottom:26px}
+.kpi{background:#fff;padding:12px 15px 13px;display:flex;flex-direction:column;gap:3px}
+.kpi .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#4A5162;font-weight:700}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:700;letter-spacing:-.02em;color:#121722}
+.kpi .u{font-size:10.5px;color:#8A90A1}
+.kpi .row{display:flex;align-items:baseline;gap:6px}
+.kpi .row b{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:700;letter-spacing:-.02em;color:#121722;font-variant-numeric:tabular-nums}
+.kpi .row i{font-style:normal;font-size:10px;color:#8A90A1;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+section{margin-bottom:28px;break-inside:auto}
+h2{font-family:"IBM Plex Serif",Georgia,serif;font-size:14.5px;margin:0 0 9px;padding-bottom:6px;border-bottom:1px solid #DCDAD3;font-weight:600}
+.note{font-size:11.5px;color:#6B7180;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;background:#1F3864;color:#fff;padding:7px 9px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600}
+td{padding:6px 9px;border-bottom:1px solid #E8E6E0}
+.r{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+tfoot th{background:#EFF3FA;color:#1F3864;border-top:2px solid #1F3864;font-size:11px;text-transform:none;letter-spacing:0}
+tbody tr:nth-child(even){background:#FAFAF8}
+footer{margin-top:34px;padding-top:12px;border-top:1px solid #DCDAD3;font-size:10.5px;color:#8A90A1;display:flex;justify-content:space-between;gap:20px}
+.sig{margin-top:44px;display:flex;gap:70px}
+.sig div{flex:1;border-top:1px solid #9A9A9A;padding-top:6px;font-size:10.5px;color:#6B7180}
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  body{background:#fff}
+  .bar{display:none}
+  .page{margin:0;padding:0;box-shadow:none;max-width:none}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+  section{break-inside:auto}
+}
+</style></head><body>
+<div class="bar"><button onclick="window.print()">Print / Save as PDF</button>
+<span>Landscape A4 is already set — just choose “Save as PDF” or your printer.</span></div>
+<div class="page">
+<header class="lh"><div class="co">${xe(COMPANY)}<small>${xe(COMPANY_SUB)}</small></div>
+<div class="meta"><strong>${xe(title)}</strong><br>Generated ${xe(fmtDate(todayISO()))}</div></header>
+<h1>${xe(title)}</h1><p class="ctx">${xe(context)}</p>
+<div class="kpis">${kpiHtml}</div>
+${secHtml}
+<div class="sig"><div>Prepared by</div><div>Reviewed by</div><div>Approved by</div></div>
+<footer><span>${xe(COMPANY)} · ${xe(COMPANY_SUB)}</span><span>${xe(footNote||"Generated from Yarn Dispatch Desk")}</span></footer>
+</div></body></html>`;
+}
+function dispatchReport(rows,f,titleOverride){
+  const byMonth=new Map(),byClient=new Map(),byItem=new Map();
+  rows.forEach(r=>{
+    const m=byMonth.get(r.date.slice(0,7))||{k:r.date.slice(0,7),n:0,bags:0,kg:0,lbs:0};
+    m.n++;m.bags+=r.bags||0;m.kg+=r.kg||0;m.lbs+=r.lbs||0;byMonth.set(m.k,m);
+    const c=byClient.get(r.client)||{k:r.client,n:0,bags:0,kg:0,lbs:0};
+    c.n++;c.bags+=r.bags||0;c.kg+=r.kg||0;c.lbs+=r.lbs||0;byClient.set(c.k,c);
+    const i=byItem.get(r.item)||{k:r.item,n:0,bags:0,kg:0,lbs:0};
+    i.n++;i.bags+=r.bags||0;i.kg+=r.kg||0;i.lbs+=r.lbs||0;byItem.set(i.k,i);
+  });
+  const sumCols=lbl=>[{label:lbl,key:"k"},{label:"Deliveries",key:"n",align:"r",fmt:r=>nf(r.n)},
+    {label:"Bags",key:"bags",align:"r",fmt:r=>nf(r.bags)},{label:"Kg",key:"kg",align:"r",fmt:r=>nf(r.kg,2)},
+    {label:"Lbs",key:"lbs",align:"r",fmt:r=>nf(r.lbs,2)}];
+  const tot={n:nf(rows.length),bags:nf(sum(rows,"bags")),kg:nf(sum(rows,"kg"),2),lbs:nf(sum(rows,"lbs"),2)};
+  const months=[...byMonth.values()].sort((a,b)=>a.k<b.k?1:-1).slice(0,18).map(x=>Object.assign({},x,{k:monthFull(x.k)}));
+  const clients=[...byClient.values()].sort((a,b)=>b.lbs-a.lbs).slice(0,15);
+  const items=[...byItem.values()].sort((a,b)=>b.lbs-a.lbs).slice(0,15);
+  const openO=S.orders.filter(o=>!isClosed(o)).map(o=>({o,st:orderStats(o)}));
+  const detailCap=1200;
+  const sections=[
+    {heading:"Dispatch by month (most recent 18)",cols:sumCols("Month"),rows:months,totals:tot},
+    {heading:"Top clients by weight",cols:sumCols("Client"),rows:clients},
+    {heading:"Top items by weight",cols:sumCols("Item"),rows:items},
+  ];
+  if(openO.length)sections.push({heading:"Open order book",
+    cols:[{label:"Order",key:"id",fmt:r=>r.o.id},{label:"Client",key:"c",fmt:r=>r.o.client},
+      {label:"Item",key:"i",fmt:r=>r.o.item+(r.o.lot?" ("+r.o.lot+")":"")},
+      {label:"Opened",key:"d",fmt:r=>fmtDate(r.o.dateOpened)},
+      {label:"Contracted Lbs",key:"cl",align:"r",fmt:r=>nf(r.o.contractedLbs,0)},
+      {label:"Delivered Lbs",key:"dl",align:"r",fmt:r=>nf(r.st.lbs,0)},
+      {label:"Open Lbs",key:"ol",align:"r",fmt:r=>nf(Math.max(0,r.st.openLbs),0)},
+      {label:"% Done",key:"p",align:"r",fmt:r=>Math.round(r.st.pct)+"%"}],
+    rows:openO.sort((a,b)=>b.st.openLbs-a.st.openLbs)});
+  sections.push({heading:"Delivery detail",
+    note:rows.length>detailCap?`${nf(rows.length)} deliveries match this selection — the detail table is limited to the ${nf(detailCap)} most recent. Use the Excel export for the complete register.`:null,
+    cols:[{label:"Date",key:"date",fmt:r=>fmtDate(r.date)},{label:"Challan",key:"challan",fmt:r=>r.challan||"—"},
+      {label:"Client",key:"client"},{label:"Item",key:"item"},{label:"Lot",key:"lot",fmt:r=>r.lot||"—"},
+      {label:"Bags",key:"bags",align:"r",fmt:r=>nf(r.bags)},{label:"Kg",key:"kg",align:"r",fmt:r=>nf(r.kg,2)},
+      {label:"Lbs",key:"lbs",align:"r",fmt:r=>nf(r.lbs,2)}],
+    rows:rows.slice(0,detailCap),totals:{bags:nf(sum(rows,"bags")),kg:nf(sum(rows,"kg"),2),lbs:nf(sum(rows,"lbs"),2)}});
+  return reportHTML({
+    title:titleOverride||"Sales & Dispatch Report",
+    context:filterContext(f),
+    kpis:[{k:"Deliveries",v:nf(rows.length),u:"challan lines"},{k:"Bags dispatched",v:nf(sum(rows,"bags")),u:"bags"},
+      {k:"Weight",v:nf(sum(rows,"kg"),0),u:"kg"},{k:"Weight",v:nf(sum(rows,"lbs"),0),u:"lbs"}],
+    sections});
+}
+
+/* ============ combobox ============ */
+function combo({value,list,placeholder,onChange,allowFree,onInputChange}){
+  const wrap=el("div",{class:"combo"});
+  const input=el("input",{type:"text",value:value||"",placeholder:placeholder||"Type to search…",autocomplete:"off",spellcheck:"false"});
+  const menu=el("div",{class:"combo-menu",hidden:true});
+  const clear=el("button",{class:"clear",type:"button",title:"Clear",hidden:!value,
+    onmousedown:e=>{e.preventDefault();input.value="";clear.hidden=true;commit("");}},"×");
+  let idx=-1,filtered=[],last=value||"";
+  const hl=(v,q)=>{if(!q)return document.createTextNode(v);
+    const i=v.toLowerCase().indexOf(q);if(i<0)return document.createTextNode(v);
+    const f=document.createDocumentFragment();
+    f.append(v.slice(0,i),el("mark",null,v.slice(i,i+q.length)),v.slice(i+q.length));return f;};
+  function paint(){
+    const q=input.value.trim().toLowerCase();
+    filtered=(!q?list.slice():list.filter(x=>x.toLowerCase().includes(q))
+      .sort((a,b)=>(a.toLowerCase().startsWith(q)?0:1)-(b.toLowerCase().startsWith(q)?0:1)||a.localeCompare(b))).slice(0,60);
+    menu.textContent="";
+    if(!filtered.length)menu.append(el("div",{class:"combo-empty"},allowFree?"New name — will be added to the list":"No match"));
+    filtered.forEach((v,i)=>menu.append(el("div",{class:"combo-item"+(i===idx?" on":""),
+      onmousedown:e=>{e.preventDefault();commit(v);}},hl(v,q))));
+    menu.hidden=false;
+  }
+  function hide(){menu.hidden=true;idx=-1;}
+  function commit(v){input.value=v;last=v;clear.hidden=!v;hide();onChange(v);}
+  input.addEventListener("focus",()=>{idx=-1;paint();});
+  input.addEventListener("input",()=>{idx=-1;clear.hidden=!input.value;paint();if(onInputChange)onInputChange(input.value);});
+  input.addEventListener("blur",()=>setTimeout(()=>{
+    hide();
+    const v=input.value.trim();
+    if(allowFree){if(v!==last)commit(v);return;}
+    if(!v){if(last!=="")commit("");return;}
+    const exact=list.find(x=>x.toLowerCase()===v.toLowerCase());
+    if(exact)commit(exact);
+    else if(filtered.length===1)commit(filtered[0]);
+    else{input.value=last;clear.hidden=!last;}
+  },140));
+  input.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      e.preventDefault();if(menu.hidden)paint();
+      idx=Math.max(0,Math.min(filtered.length-1,idx+(e.key==="ArrowDown"?1:-1)));
+      [...menu.children].forEach((c,i)=>c.classList.toggle("on",i===idx));
+      const on=menu.children[idx];if(on&&on.scrollIntoView)on.scrollIntoView({block:"nearest"});
+    }else if(e.key==="Enter"){
+      e.preventDefault();
+      if(idx>=0&&filtered[idx])commit(filtered[idx]);
+      else if(filtered.length===1)commit(filtered[0]);
+      else if(allowFree)commit(input.value.trim());
+      else hide();
+    }else if(e.key==="Escape"){input.value=last;hide();}
+  });
+  wrap.append(input,clear,menu);
+  wrap.getValue=()=>input.value.trim();
+  wrap.setValue=v=>{input.value=v||"";last=input.value;clear.hidden=!input.value;};
+  wrap.focus=()=>input.focus();
+  return wrap;
+}
+const comboField=(label,opts)=>el("label",{class:"field"},label,combo(opts));
+
+/* ============ charts ============ */
+function tipFor(w){if(!w._tip){w._tip=el("div",{class:"tip"});w.append(w._tip);}return w._tip;}
+function monthlyChart(series){
+  const W=760,H=214,PL=56,PR=8,PT=14,PB=26,iw=W-PL-PR,ih=H-PT-PB;
+  const max=Math.max(1,...series.map(d=>d.lbs));
+  const step=Math.pow(10,Math.floor(Math.log10(max)));
+  const nice=Math.ceil(max/step)*step;
+  const gap=iw/series.length,bw=Math.max(3,gap*0.66);
+  const ns="http://www.w3.org/2000/svg",wrap=el("div",{class:"chartwrap"});
+  const svg=document.createElementNS(ns,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("class","chart");svg.setAttribute("role","img");
+  svg.setAttribute("aria-label",`Dispatched weight by month across ${series.length} months, peak ${Math.round(nice).toLocaleString()} lbs`);
+  const mk=(t,a)=>{const n=document.createElementNS(ns,t);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);return n;};
+  for(let i=0;i<=4;i++){
+    const v=nice/4*i,y=PT+ih-ih*(v/nice);
+    svg.append(mk("line",{x1:PL,x2:W-PR,y1:y,y2:y,class:"grid"}));
+    const t=mk("text",{x:PL-9,y:y+3.5,class:"axis","text-anchor":"end"});
+    t.textContent=v>=1000?Math.round(v/1000)+"k":Math.round(v);svg.append(t);
+  }
+  series.forEach((d,i)=>{
+    const h=Math.max(d.lbs>0?2:0,ih*(d.lbs/nice)),x=PL+gap*i+(gap-bw)/2,y=PT+ih-h;
+    const r=mk("rect",{x,y,width:bw,height:h,rx:Math.min(3,bw/2),class:"bar"});
+    r.style.cursor="crosshair";
+    r.addEventListener("mousemove",ev=>{const b=wrap.getBoundingClientRect();const t=tipFor(wrap);
+      t.textContent=`${monthFull(d.month)} · ${Math.round(d.lbs).toLocaleString()} lbs · ${d.bags} bags · ${d.n} challans`;
+      t.style.left=(ev.clientX-b.left)+"px";t.style.top=(ev.clientY-b.top-6)+"px";t.classList.add("on");});
+    r.addEventListener("mouseleave",()=>{if(wrap._tip)wrap._tip.classList.remove("on");});
+    svg.append(r);
+    const every=series.length>16?3:(series.length>8?2:1);
+    if(i%every===0||i===series.length-1){
+      const t=mk("text",{x:x+bw/2,y:H-8,class:"axis","text-anchor":"middle"});
+      t.textContent=monthLabel(d.month);svg.append(t);
+    }
+  });
+  wrap.append(svg);return wrap;
+}
+/* Raw yarn in against finished yarn out, month by month. Deliberately two bars
+   rather than a running balance: what is bought and what is sold are different
+   goods until production is in the picture, and pretending otherwise would put
+   a wrong number on the screen. */
+function flowChart(series){
+  const W=760,H=232,PL=56,PR=8,PT=14,PB=44,iw=W-PL-PR,ih=H-PT-PB;
+  const max=Math.max(1,...series.map(d=>Math.max(d.inKg,d.outKg)));
+  const step=Math.pow(10,Math.floor(Math.log10(max)));
+  const nice=Math.ceil(max/step)*step;
+  const gap=iw/series.length,bw=Math.max(2,(gap*0.72)/2);
+  const ns="http://www.w3.org/2000/svg",wrap=el("div",{class:"chartwrap"});
+  const svg=document.createElementNS(ns,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("class","chart");svg.setAttribute("role","img");
+  svg.setAttribute("aria-label",`Yarn in against yarn out by month across ${series.length} months, in kilograms, peak ${Math.round(nice).toLocaleString()} kg`);
+  const mk=(t,a)=>{const n=document.createElementNS(ns,t);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);return n;};
+  for(let i=0;i<=4;i++){
+    const v=nice/4*i,y=PT+ih-ih*(v/nice);
+    svg.append(mk("line",{x1:PL,x2:W-PR,y1:y,y2:y,class:"grid"}));
+    const t=mk("text",{x:PL-9,y:y+3.5,class:"axis","text-anchor":"end"});
+    t.textContent=v>=1000?Math.round(v/1000)+"k":Math.round(v);svg.append(t);
+  }
+  series.forEach((d,i)=>{
+    const x0=PL+gap*i+(gap-bw*2)/2;
+    [["inKg","bar-in",0],["outKg","bar-out",bw]].forEach(([k,cls,dx])=>{
+      const h=Math.max(d[k]>0?2:0,ih*(d[k]/nice)),y=PT+ih-h;
+      const r=mk("rect",{x:x0+dx,y,width:bw,height:h,rx:Math.min(2,bw/2),class:cls});
+      r.style.cursor="crosshair";
+      r.addEventListener("mousemove",ev=>{const b=wrap.getBoundingClientRect(),t=tipFor(wrap);
+        t.textContent=`${monthFull(d.month)} · in ${Math.round(d.inKg).toLocaleString()} kg · out ${Math.round(d.outKg).toLocaleString()} kg`;
+        t.style.left=(ev.clientX-b.left)+"px";t.style.top=(ev.clientY-b.top-6)+"px";t.classList.add("on");});
+      r.addEventListener("mouseleave",()=>{if(wrap._tip)wrap._tip.classList.remove("on");});
+      svg.append(r);
+    });
+    const every=series.length>16?3:(series.length>8?2:1);
+    if(i%every===0||i===series.length-1){
+      const t=mk("text",{x:x0+bw,y:H-26,class:"axis","text-anchor":"middle"});
+      t.textContent=monthLabel(d.month);svg.append(t);
+    }
+  });
+  wrap.append(svg,el("div",{class:"legend"},
+    el("span",null,el("i",{class:"sw in"}),"Purchased in (raw yarn)"),
+    el("span",null,el("i",{class:"sw out"}),"Dispatched out (finished yarn)")));
+  return wrap;
+}
+function rankChart(items,unit){
+  const max=Math.max(1,...items.map(d=>d.value));
+  const wrap=el("div",{class:"ranklist",role:"list"});
+  items.forEach(d=>wrap.append(el("div",{class:"rankrow",role:"listitem",title:d.label+" — "+nf(d.value,0)+" "+unit},
+    el("span",{class:"rl"},d.label),el("span",{class:"rb"},el("i",{style:"width:"+Math.max(1.5,d.value/max*100)+"%"})),
+    el("span",{class:"rv"},nf(d.value,0)))));
+  return wrap;
+}
+
+/* ============ shared bits ============ */
+function svgIcon(name){
+  const p={print:'<path d="M6 9V3h12v6"/><path d="M6 18H4v-6h16v6h-2"/><path d="M8 14h8v7H8z"/>',
+    doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 16h5"/>',
+    grid:'<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 14h16M10 4v16"/>',
+    down:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+    edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>'}[name];
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("viewBox","0 0 24 24");s.innerHTML=p;s.setAttribute("fill","none");
+  s.setAttribute("stroke","currentColor");s.setAttribute("stroke-width","1.7");
+  s.setAttribute("stroke-linecap","round");s.setAttribute("stroke-linejoin","round");
+  return s;
+}
+const tile=(k,v,u,mod)=>el("div",{class:"tile"+(mod?" "+mod:"")},el("span",{class:"k"},k),el("span",{class:"v"},v),el("span",{class:"u"},u));
+function tileGroup(label,note,tiles,cls){
+  return el("div",{style:"display:flex;flex-direction:column;gap:10px"},
+    el("div",{class:"sechead"},el("h2",null,label),el("span",{class:"line"}),note?el("span",{class:"note"},note):null),
+    el("div",{class:"tiles "+(cls||"t4")},tiles));
+}
+function progress(pct){
+  const w=Math.max(0,Math.min(100,pct));
+  return el("div",{style:"display:flex;align-items:center;gap:9px;min-width:120px"},
+    el("div",{class:"prog"+(w>=100?" full":"")},el("span",{style:"width:"+w+"%"})),
+    el("span",{class:"num",style:"font-size:11.5px;color:var(--muted);min-width:36px;text-align:right"},Math.round(w)+"%"));
+}
+
+/* ============ nav / router ============ */
+/* Two mirrored sections — what goes out and what comes in. Each keeps its own
+   register and its own order book behind a subtab, so the rail stays short. */
+const NAV=[
+  {id:"dashboard",label:"Dashboard",icon:'<path d="M3 13h6V3H3zM15 21h6V11h-6zM3 21h6v-5H3zM15 8h6V3h-6z"/>'},
+  {id:"sales",label:"Sales Delivery",icon:'<path d="M3 7h13v10H3zM16 10h3l2 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/>'},
+  {id:"purchase",label:"Purchase Delivery",icon:'<path d="M21 8v12H3V8"/><path d="M2 8h20l-2-4H4z"/><path d="M12 18v-7"/><path d="M9 14l3 3 3-3"/>'},
+  {id:"reports",label:"Reports",icon:'<path d="M5 3h14v18H5z"/><path d="M9 8h6M9 12h6M9 16h3"/>'},
+  {id:"setup",label:"Reference Data",icon:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 5h4M19 3v4"/>'},
+];
+const SECTIONS={
+  sales:{tabs:[["register","Delivery Register"],["orders","Sales Orders"]],
+    views:{register:()=>viewDeliveries,orders:()=>viewOrders}},
+  purchase:{tabs:[["register","Purchase Register"],["orders","Purchase Orders"]],
+    views:{register:()=>viewPurchases,orders:()=>viewPOrders}},
+};
+const LEGACY={deliveries:["sales","register"],orders:["sales","orders"]};
+function renderNav(){
+  const n=$("#nav");n.textContent="";
+  NAV.forEach(v=>{
+    const b=el("button",{type:"button",onclick:()=>go(v.id)});
+    b.innerHTML=`<svg viewBox="0 0 24 24">${v.icon}</svg><span>${v.label}</span>`;
+    if(v.id===S.view)b.setAttribute("aria-current","page");
+    if(S.ready){
+      if(v.id==="sales")b.append(el("span",{class:"count"},nf(allRows().length)));
+      if(v.id==="purchase")b.append(el("span",{class:"count"},nf(allPRows().length)));
+    }
+    n.append(b);
+  });
+}
+function go(v,tab){
+  if(LEGACY[v]){const[a,b]=LEGACY[v];v=a;tab=tab||b;}
+  S.view=v;if(tab&&SECTIONS[v])S.sec[v]=tab;
+  render();window.scrollTo(0,0);
+}
+function subnavFor(sec){
+  const bar=el("div",{class:"subnav page"});
+  SECTIONS[sec].tabs.forEach(([id,label])=>{
+    const b=el("button",{type:"button","aria-selected":S.sec[sec]===id?"true":"false",
+      onclick:()=>{S.sec[sec]=id;render();}},label);
+    if(S.ready){
+      const c=sec==="sales"
+        ? (id==="orders"?S.orders.filter(o=>!isClosed(o)).length:allRows().length)
+        : (id==="orders"?S.porders.filter(o=>!isClosed(o)).length:allPRows().length);
+      b.append(el("span",{class:"tabct"},nf(c)));
+    }
+    bar.append(b);
+  });
+  return bar;
+}
+function render(){
+  renderNav();
+  const root=$("#viewRoot"),acts=$("#viewActions");
+  root.textContent="";acts.textContent="";
+  if(!S.ready){
+    root.append(el("div",{class:"card"},el("div",{class:"empty"},S.loadError?
+      el("div",null,el("strong",null,"Storage unavailable"),"This page could not reach its saved data. Reload the page — if it keeps happening, the artifact's storage may not be enabled for this view."):
+      "Loading your ledger…")));
+    return;
+  }
+  if(SECTIONS[S.view]){
+    root.append(subnavFor(S.view));
+    SECTIONS[S.view].views[S.sec[S.view]]()(root,acts);
+    return;
+  }
+  ({dashboard:viewDashboard,reports:viewReports,setup:viewSetup}[S.view]||viewDashboard)(root,acts);
+}
+function head(eyebrow,title,sub){
+  $("#viewEyebrow").textContent=eyebrow;$("#viewTitle").textContent=title;
+  $("#viewSub").textContent=(sub||"")+(S.histLoaded?"":"   ·   loading history…");
+}
+
+/* ============ DASHBOARD ============ */
+function viewDashboard(root,acts){
+  const f=S.dash,rows=filterRows(f);
+  head("Sales & Dispatch","Dashboard",`${nf(rows.length)} deliveries in view · ${S.orders.filter(o=>!isClosed(o)).length} orders open`);
+  acts.append(
+    el("button",{class:"btn",onclick:()=>download("yarn-dispatch-report.html",dispatchReport(rows,f))},svgIcon("doc"),"Report"),
+    el("button",{class:"btn",onclick:()=>exportDeliveriesXlsx(rows,"Delivery Register",filterContext(f),"yarn-deliveries.xlsx")},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn btn-primary",onclick:newChallan},svgIcon("plus"),"New challan"));
+
+  root.append(el("div",{class:"filterbar"},
+    comboField("Client",{value:f.client,list:S.clients,placeholder:"All clients",onChange:v=>{f.client=v;render();}}),
+    comboField("Item",{value:f.item,list:S.items,placeholder:"All items",onChange:v=>{f.item=v;render();}}),
+    el("label",{class:"field"},"From",el("input",{type:"date",value:f.from,onchange:e=>{f.from=e.target.value;render();}})),
+    el("label",{class:"field"},"To",el("input",{type:"date",value:f.to,onchange:e=>{f.to=e.target.value;render();}})),
+    el("button",{class:"btn btn-ghost",onclick:()=>{S.dash={client:"",item:"",from:"",to:""};render();}},"Reset")));
+
+  const openO=S.orders.filter(o=>!isClosed(o)).map(o=>({o,st:orderStats(o)}));
+  const openBags=openO.reduce((s,x)=>s+Math.max(0,x.st.openBags),0);
+  const openLbs=openO.reduce((s,x)=>s+Math.max(0,x.st.openLbs),0);
+  const contLbs=openO.reduce((s,x)=>s+(x.o.contractedLbs||0),0);
+  const delLbs=openO.reduce((s,x)=>s+x.st.lbs,0);
+
+  root.append(tileGroup("Dispatched",filterContext(f),[
+    tile("Deliveries",nf(rows.length),"challan lines"),
+    tile("Bags",nf(sum(rows,"bags")),"bags dispatched"),
+    tile("Weight",nf(sum(rows,"kg"),0),"kg"),
+    tile("Weight",nf(sum(rows,"lbs"),0),"lbs")]));
+
+  root.append(tileGroup("Order book","Live across all open contracts",[
+    tile("Orders open",nf(openO.length),"contracts","accent"),
+    tile("Still to deliver",nf(openBags),"bags","accent"),
+    tile("Still to deliver",nf(openLbs,0),"lbs","accent"),
+    tile("Fulfilled",contLbs>0?Math.round(delLbs/contLbs*100)+"%":"—","of contracted lbs","accent")]));
+
+  /* Client and item filters belong to the sales side; only the dates carry
+     across to purchases, so the two halves stay comparable. */
+  const pRows=filterPRows({from:f.from,to:f.to});
+  root.append(tileGroup("Purchased in",
+    (f.from||f.to)?"Same dates as above · all suppliers":"All suppliers · all items · full history",[
+    tile("Receipts",nf(pRows.length),"incoming lines","brassy"),
+    tile("Weight in",nf(sum(pRows,"kg"),0),"kg","brassy"),
+    tile("Weight in",nf(sum(pRows,"lbs"),0),"lbs","brassy"),
+    tile("Suppliers",nf(new Set(pRows.map(r=>r.supplier)).size),"distinct","brassy")]));
+
+  const byMonth=new Map();
+  rows.forEach(r=>{const k=r.date.slice(0,7);const m=byMonth.get(k)||{month:k,lbs:0,bags:0,n:0};
+    m.lbs+=r.lbs||0;m.bags+=r.bags||0;m.n++;byMonth.set(k,m);});
+  const series=[...byMonth.values()].sort((a,b)=>a.month<b.month?-1:1).slice(-24);
+
+  const flow=new Map();
+  const bump=(k,f2,v)=>{const e=flow.get(k)||{month:k,inKg:0,outKg:0};e[f2]+=v||0;flow.set(k,e);};
+  pRows.forEach(r=>bump(r.date.slice(0,7),"inKg",r.kg));
+  rows.forEach(r=>bump(r.date.slice(0,7),"outKg",r.kg));
+  const flowSeries=[...flow.values()].sort((a,b)=>a.month<b.month?-1:1).slice(-24);
+  if(flowSeries.length)root.append(el("div",{class:"card"},
+    el("div",{class:"card-head"},el("h2",null,"Yarn in vs yarn out"),
+      el("span",{class:"hint"},`${monthFull(flowSeries[0].month)} – ${monthFull(flowSeries[flowSeries.length-1].month)} · kg`)),
+    el("div",{class:"card-body"},flowChart(flowSeries),
+      el("div",{class:"notice",style:"margin-top:14px"},
+        "Two separate bars, not a balance. What comes in is raw yarn and what goes out is twisted, doubled or covered yarn, "+
+        "so the gap between them is not stock — it is stock plus work in progress plus waste. Turning this into a real stock "+
+        "figure needs production output and an opening count, which is the next build."))));
+  root.append(el("div",{class:"card"},
+    el("div",{class:"card-head"},el("h2",null,"Dispatched weight by month"),
+      el("span",{class:"hint"},series.length?`${monthFull(series[0].month)} – ${monthFull(series[series.length-1].month)} · lbs`:"")),
+    el("div",{class:"card-body"},series.length?monthlyChart(series):el("div",{class:"empty"},"No deliveries in this range"))));
+
+  const rank=(key,n)=>{const m=new Map();rows.forEach(r=>m.set(r[key],(m.get(r[key])||0)+(r.lbs||0)));
+    return[...m.entries()].map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value).slice(0,8);};
+  root.append(el("div",{style:"display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px"},
+    el("div",{class:"card"},el("div",{class:"card-head"},el("h2",null,"Top clients"),el("span",{class:"hint"},"lbs dispatched")),
+      el("div",{class:"card-body"},rows.length?rankChart(rank("client"),"lbs"):el("div",{class:"empty"},"No data"))),
+    el("div",{class:"card"},el("div",{class:"card-head"},el("h2",null,"Top items"),el("span",{class:"hint"},"lbs dispatched")),
+      el("div",{class:"card-body"},rows.length?rankChart(rank("item"),"lbs"):el("div",{class:"empty"},"No data")))));
+
+  if(openO.length){
+    const tb=el("tbody");
+    openO.sort((a,b)=>b.st.openLbs-a.st.openLbs).forEach(({o,st})=>{
+      const b=orderBadge(o,st);
+      tb.append(el("tr",{class:"clickable "+b.stripe,onclick:()=>openOrder(o.id)},
+        el("td",{class:"mono"},o.id),el("td",null,o.client),el("td",null,o.item),
+        el("td",null,o.lot?el("span",{class:"chip"},o.lot):"—"),
+        el("td",{class:"n"},nf(st.lbs,0)),el("td",{class:"n"},nf(Math.max(0,st.openLbs),0)),el("td",null,progress(st.pct))));
+    });
+    root.append(el("div",{class:"card"},
+      el("div",{class:"card-head"},el("h2",null,"Open orders"),el("span",{class:"hint"},"Click a row for every delivery behind it")),
+      el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+        el("th",null,"Order"),el("th",null,"Client"),el("th",null,"Item"),el("th",null,"Lot"),
+        el("th",{class:"n"},"Delivered lbs"),el("th",{class:"n"},"Open lbs"),el("th",null,"Progress"))),tb))));
+  }
+
+  const recent=rows.slice(0,12);
+  if(recent.length){
+    const tb=el("tbody");
+    recent.forEach(r=>tb.append(el("tr",{class:"clickable",onclick:e=>{if(!e.target.closest("button"))viewChallan(r);}},
+      el("td",null,fmtDate(r.date)),el("td",{class:"mono"},r.challan||"—"),el("td",null,r.client),el("td",null,r.item),
+      el("td",null,r.lot?el("span",{class:"chip"},r.lot):"—"),
+      el("td",{class:"n"},nf(r.bags)),el("td",{class:"n"},nf(r.kg,2)),el("td",{class:"n"},nf(r.lbs,2)),
+      el("td",{style:"text-align:right"},el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Print this challan",
+        onclick:()=>printChallan(r)},svgIcon("print"))))));
+    root.append(el("div",{class:"card"},el("div",{class:"card-head"},el("h2",null,"Latest dispatches"),
+      el("span",{class:"hint"},"Click a row to open the challan")),
+      el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+        el("th",null,"Date"),el("th",null,"Challan"),el("th",null,"Client"),el("th",null,"Item"),el("th",null,"Lot"),
+        el("th",{class:"n"},"Bags"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"),el("th",null,""))),tb))));
+  }
+}
+
+/* ============ DELIVERIES ============ */
+function viewDeliveries(root,acts){
+  const f=S.del,rows=filterRows(f);
+  head("Register","Deliveries",`${nf(rows.length)} of ${nf(allRows().length)} challan lines`);
+  acts.append(
+    el("button",{class:"btn",onclick:()=>download("yarn-delivery-report.html",dispatchReport(rows,f,"Delivery Register Report"))},svgIcon("doc"),"Report"),
+    el("button",{class:"btn",onclick:()=>exportDeliveriesXlsx(rows,"Delivery Register",filterContext(f),"yarn-deliveries.xlsx")},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn",onclick:()=>printDayChallans(rows),title:"One file with every challan in this selection"},svgIcon("print"),"Print challans"),
+    el("button",{class:"btn btn-primary",onclick:newChallan},svgIcon("plus"),"New challan"));
+
+  root.append(el("div",{class:"filterbar"},
+    el("label",{class:"field grow"},"Search",el("input",{type:"search",placeholder:"Challan no, billty, lot…",value:f.q,
+      oninput:e=>{f.q=e.target.value;f.page=1;repaintDeliveries();}})),
+    comboField("Client",{value:f.client,list:S.clients,placeholder:"All clients",onChange:v=>{f.client=v;f.page=1;repaintDeliveries();}}),
+    comboField("Item",{value:f.item,list:S.items,placeholder:"All items",onChange:v=>{f.item=v;f.page=1;repaintDeliveries();}}),
+    el("label",{class:"field"},"From",el("input",{type:"date",value:f.from,onchange:e=>{f.from=e.target.value;f.page=1;repaintDeliveries();}})),
+    el("label",{class:"field"},"To",el("input",{type:"date",value:f.to,onchange:e=>{f.to=e.target.value;f.page=1;repaintDeliveries();}})),
+    el("button",{class:"btn btn-ghost",onclick:()=>{S.del={q:"",client:"",item:"",from:"",to:"",page:1,size:f.size};render();}},"Reset")));
+
+  root.append(el("div",{id:"delTiles"}));
+  root.append(el("div",{id:"delTable"}));
+  repaintDeliveries();
+}
+function repaintDeliveries(){
+  const f=S.del,rows=filterRows(f);
+  const th=document.querySelector("#delTiles");
+  if(th){
+    th.textContent="";
+    const kgAvg=rows.length?sum(rows,"kg")/rows.length:0;
+    th.append(tileGroup("This selection",filterContext(f),[
+      tile("Deliveries",nf(rows.length),"challan lines"),
+      tile("Bags",nf(sum(rows,"bags")),"bags"),
+      tile("Weight",nf(sum(rows,"kg"),0),"kg"),
+      tile("Weight",nf(sum(rows,"lbs"),0),"lbs"),
+      tile("Avg per challan",nf(kgAvg,1),"kg","brassy"),
+      tile("Clients",nf(new Set(rows.map(r=>r.client)).size),"distinct","brassy"),
+      tile("Items",nf(new Set(rows.map(r=>r.item)).size),"distinct","brassy"),
+      tile("Period",rows.length?monthLabel(rows[rows.length-1].date.slice(0,7))+" → "+monthLabel(rows[0].date.slice(0,7)):"—","covered","brassy")]));
+  }
+  const host=document.querySelector("#delTable");if(!host)return;
+  const pages=Math.max(1,Math.ceil(rows.length/f.size));
+  if(f.page>pages)f.page=pages;
+  const slice=rows.slice((f.page-1)*f.size,f.page*f.size);
+  host.textContent="";
+  const tb=el("tbody");
+  slice.forEach(r=>tb.append(el("tr",{class:"clickable",onclick:e=>{if(!e.target.closest("button"))viewChallan(r);}},
+    el("td",null,fmtDate(r.date)),
+    el("td",{class:"mono"},r.challan||"—",(r.bl&&r.bl.length)?el("span",{class:"hasbags",title:r.bl.length+" bags recorded"}):null),
+    el("td",null,r.client),el("td",null,r.item),
+    el("td",null,r.lot?el("span",{class:"chip"},r.lot):"—"),
+    el("td",{class:"n"},nf(r.bags)),
+    el("td",{class:"n"},(function(){const c=rowCones(r);return c==null?"—":nf(c);})()),
+    el("td",{class:"n"},nf(r.kg,2)),el("td",{class:"n"},nf(r.lbs,2)),
+    el("td",{class:"mono"},r.vehicle||"—"),
+    el("td",{style:"text-align:right;white-space:nowrap"},
+      el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Print this challan",onclick:()=>printChallan(r)},svgIcon("print")),
+      el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Open / edit",onclick:()=>editDelivery(r)},svgIcon("edit")),
+      el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Delete",onclick:()=>removeDelivery(r)},svgIcon("trash"))))));
+  const table=el("table",null,el("thead",null,el("tr",null,
+    el("th",null,"Date"),el("th",null,"Challan"),el("th",null,"Client"),el("th",null,"Item"),el("th",null,"Lot"),
+    el("th",{class:"n"},"Bags"),el("th",{class:"n"},"Cones"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"),
+    el("th",null,"Vehicle"),el("th",null,""))),tb);
+  host.append(el("div",{class:"card"},el("div",{class:"tablewrap"},table),
+    rows.length?el("div",{class:"pager"},
+      `Rows ${((f.page-1)*f.size+1)}–${Math.min(f.page*f.size,rows.length)} of ${nf(rows.length)}`,
+      el("span",{class:"spacer"}),
+      el("button",{class:"btn btn-sm",disabled:f.page<=1?true:null,onclick:()=>{f.page--;repaintDeliveries();}},"Prev"),
+      el("span",{class:"num"},`${f.page} / ${pages}`),
+      el("button",{class:"btn btn-sm",disabled:f.page>=pages?true:null,onclick:()=>{f.page++;repaintDeliveries();}},"Next"),
+      el("select",{style:"width:auto",onchange:e=>{f.size=+e.target.value;f.page=1;repaintDeliveries();}},
+        [25,50,100,250].map(n=>el("option",{value:n,selected:n===f.size?true:null},n+" / page"))))
+    :el("div",{class:"empty"},el("strong",null,"No deliveries match"),"Try clearing the filters above.")));
+}
+/* Follows the book actually in use: takes the newest date that has numbered
+   challans and steps on from the highest number written that day. Falls back
+   to the last number saved in meta so the form is instant before history loads. */
+function nextChallanNo(){
+  const n=v=>{const x=parseInt(String(v||"").replace(/[^0-9]/g,""),10);return(!isNaN(x)&&x<100000)?x:null;};
+  let day=null,max=0;
+  for(const r of allRows()){
+    const v=n(r.challan);
+    if(v==null)continue;
+    if(day===null)day=r.date;
+    if(r.date!==day)break;
+    if(v>max)max=v;
+  }
+  if(!max)max=n(S.meta&&S.meta.lastChallanNo)||0;
+  return max?String(max+1):"";
+}
+const ordersForClient=c=>S.orders.filter(o=>o.client===c&&!isClosed(o));
+
+function challanForm(edit){
+  const src=edit||{};
+  const st={bl:(src.bl||[]).map(b=>({m:b.m||"",k:b.k==null?"":b.k,c:b.c==null?"":b.c}))};
+  const F={};
+  F.date=el("input",{type:"date",value:src.date||todayISO()});
+  F.challan=el("input",{value:(src.challan!=null&&src.challan!=="")?String(src.challan):nextChallanNo(),placeholder:"e.g. 1676"});
+  F.po=el("input",{value:src.po||"",placeholder:"optional"});
+  F.lot=el("input",{value:src.lot||"",placeholder:"S / P / M",maxlength:"12"});
+  F.cone=el("input",{value:src.cone||"",placeholder:"e.g. Green Tip"});
+  F.vehicle=el("input",{value:src.vehicle||"",placeholder:"e.g. JV-8170"});
+  F.billty=el("input",{value:src.billty||"",placeholder:"optional"});
+  F.receiver=el("input",{value:src.receiver||"",placeholder:"driver's name"});
+  F.notes=el("textarea",{placeholder:"Delivery terms or a note printed on this challan"},src.notes||"");
+  F.orderSel=el("select",null);
+  F.itemC=combo({value:src.item||"",list:S.items,placeholder:"Type an item…",allowFree:true,onChange:()=>{}});
+  F.clientC=combo({value:src.client||"",list:S.clients,placeholder:"Type a client…",allowFree:true,onChange:v=>paintOrders(v)});
+
+  function paintOrders(client){
+    const os=ordersForClient(client);
+    F.orderSel.textContent="";
+    F.orderSel.append(el("option",{value:""},os.length?"— not linked —":"— no open orders for this client —"));
+    os.forEach(o=>F.orderSel.append(el("option",{value:o.id,selected:o.id===(src.orderId||"")?true:null},
+      `${o.id} · ${o.item}${o.lot?" (lot "+o.lot+")":""}${o.po?" · PO "+o.po:""}`)));
+  }
+  paintOrders(src.client||"");
+  F.orderSel.addEventListener("change",()=>{
+    const o=S.orders.find(x=>x.id===F.orderSel.value);if(!o)return;
+    F.itemC.setValue(o.item);
+    if(o.lot&&!F.lot.value)F.lot.value=o.lot;
+    if(o.po&&!F.po.value)F.po.value=o.po;
+    if(o.notes&&!F.notes.value)F.notes.value=o.notes;
+    toast("Filled from "+o.id);
+  });
+
+  const tbody=el("tbody");
+  const tBags=el("span",{class:"v"}),tKg=el("span",{class:"v"}),tLbs=el("span",{class:"v"}),tCones=el("span",{class:"v"});
+  F.mBags=el("input",{type:"number",step:"1",value:src.bags==null?"":src.bags,placeholder:"0",oninput:recalc});
+  F.mKg=el("input",{type:"number",step:"0.01",value:src.kg==null?"":src.kg,placeholder:"0.00",oninput:recalc});
+  F.mCones=el("input",{type:"number",step:"1",value:src.cones==null?"":src.cones,placeholder:"0",oninput:recalc});
+  const manual=el("div",{class:"formgrid",style:"padding:15px 17px;border-top:1px solid var(--border)"},
+    el("label",{class:"field"},"Total bags",F.mBags),
+    el("label",{class:"field"},"Net weight (kg)",F.mKg),
+    el("label",{class:"field"},"Total cones",F.mCones),
+    el("div",{class:"hint",style:"align-self:end"},"Or add bags above and these fill in themselves."));
+
+  function normMachine(t){
+    const s=String(t).toUpperCase().replace(/\s+/g,"");
+    const m=s.match(/^(\d+(?:-\d+)?)-?([A-Z])$/);
+    return m?m[1]+"-"+m[2]:s;
+  }
+  /* a row only counts as a bag once it has a weight, so the blank starter row
+     and any half-typed row never inflate the totals */
+  const filledBags=()=>st.bl.filter(b=>b.k!==""&&b.k!=null&&!isNaN(parseFloat(b.k)));
+  function totals(){
+    const f=filledBags();
+    if(f.length)return{
+      bags:f.length,
+      kg:f.reduce((s,b)=>s+(parseFloat(b.k)||0),0),
+      cones:f.reduce((s,b)=>s+(parseFloat(b.c)||0),0)};
+    return{bags:num(F.mBags.value)||0,kg:num(F.mKg.value)||0,cones:num(F.mCones.value)||0};
+  }
+  function recalc(){
+    const t=totals();
+    tBags.textContent=nf(t.bags);tKg.textContent=nf(t.kg,2);
+    tLbs.textContent=nf(t.kg*KG_TO_LBS,2);tCones.textContent=nf(t.cones);
+    manual.hidden=filledBags().length>0;
+  }
+  function focusRow(i,col){
+    const rows=tbody.querySelectorAll("tr");
+    if(rows[i]){const ins=rows[i].querySelectorAll("input");if(ins[col])ins[col].focus();}
+  }
+  function paintBags(){
+    tbody.textContent="";
+    st.bl.forEach((b,i)=>{
+      const m=el("input",{value:b.m,placeholder:"13-B",oninput:e=>{b.m=e.target.value;},
+        onblur:e=>{const v=e.target.value.trim();if(v){b.m=normMachine(v);e.target.value=b.m;}}});
+      const k=el("input",{type:"number",step:"0.01",inputmode:"decimal",value:b.k,placeholder:"0.00",
+        oninput:e=>{b.k=e.target.value;recalc();}});
+      const c=el("input",{type:"number",step:"1",inputmode:"numeric",value:b.c,placeholder:"0",
+        oninput:e=>{b.c=e.target.value;recalc();}});
+      /* Enter anywhere in a row jumps on; Enter in Cones starts the next bag */
+      m.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();focusRow(i,1);}});
+      k.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();focusRow(i,2);}});
+      c.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();
+        if(i===st.bl.length-1)addBag();else focusRow(i+1,1);}});
+      tbody.append(el("tr",null,el("td",{class:"ix"},String(i+1)),el("td",null,m),el("td",null,k),el("td",null,c),
+        el("td",{class:"rm"},el("button",{class:"btn btn-sm btn-ghost",title:"Remove this bag",tabindex:"-1",
+          onclick:()=>{st.bl.splice(i,1);if(!st.bl.length)st.bl.push({m:"",k:"",c:""});paintBags();}},svgIcon("trash")))));
+    });
+    recalc();
+  }
+  /* machine carries down (it repeats for a run of bags); weight and cones stay
+     empty because they differ on every bag */
+  function addBag(){
+    const p=st.bl[st.bl.length-1];
+    st.bl.push({m:p?p.m:"",k:"",c:""});
+    paintBags();
+    focusRow(st.bl.length-1,1);
+    const w=tbody.closest(".tablewrap");if(w)w.scrollTop=w.scrollHeight;
+  }
+  if(!st.bl.length)st.bl.push({m:"",k:"",c:""});
+  paintBags();
+
+  const status=el("div",{class:"formerr",hidden:true});
+  const flag=node=>{
+    const target=node&&(node.tagName==="INPUT"?node:node.querySelector("input"));
+    if(!target)return;
+    target.classList.add("bad");
+    target.scrollIntoView({block:"center",behavior:"smooth"});
+    setTimeout(()=>target.focus(),160);
+    setTimeout(()=>target.classList.remove("bad"),2600);
+  };
+  async function save(andPrint){
+    const t=totals();
+    const rec={date:F.date.value,client:F.clientC.getValue(),item:F.itemC.getValue(),
+      lot:F.lot.value.trim(),cone:F.cone.value.trim(),po:F.po.value.trim(),
+      challan:F.challan.value.trim(),vehicle:F.vehicle.value.trim(),billty:F.billty.value.trim(),
+      receiver:F.receiver.value.trim(),notes:F.notes.value.trim(),orderId:F.orderSel.value||"",
+      bl:filledBags().map(b=>({m:String(b.m||"").trim(),k:num(b.k),c:num(b.c)})),
+      bags:t.bags||null,kg:t.kg||null,lbs:t.kg?+(t.kg*KG_TO_LBS).toFixed(4):null,cones:t.cones||null};
+    const fail=(m,node)=>{status.textContent=m;status.hidden=false;toast(m);flag(node);};
+    if(!rec.date)return fail("Enter the challan date.",F.date);
+    if(!rec.client)return fail("Enter the client — a challan can't be saved without one.",F.clientC);
+    if(!rec.item)return fail("Enter the item / yarn spec.",F.itemC);
+    if(!rec.kg)return fail("Add at least one bag with a weight, or type the totals by hand.",
+      st.bl.length?tbody.querySelector("tr input:nth-child(1)"):F.mKg);
+    if(rec.bl.length&&rec.bl.some(b=>b.k==null))return fail("Every bag needs a weight.");
+    status.hidden=true;status.textContent="";
+    const dupe=allRows().find(x=>x.challan&&rec.challan&&String(x.challan)===rec.challan&&x.date===rec.date&&x.client===rec.client&&(!edit||x.id!==edit.id));
+    if(dupe&&!await ask("Challan already recorded",
+      `Challan ${rec.challan} on ${fmtDate(rec.date)} for ${rec.client} is already in the register. Save this one anyway?`,
+      "Save anyway"))return;
+    /* The record is committed to the page immediately and the database write
+       runs behind it (the sidebar chip reports that), so a slow or stalled
+       write can never leave the button looking dead. */
+    try{
+      if(edit)await updateDelivery(edit.id,rec);else await addDelivery(rec);
+      if(andPrint)printChallan(rec);
+      closeDrawer();render();
+    }catch(e){
+      console.error(e);
+      fail("Could not save: "+((e&&e.message)||e)+" — nothing was lost, try again.");
+    }
+  }
+
+  const wrap=el("div",{style:"display:flex;flex-direction:column;gap:18px"});
+  wrap.append(
+    el("div",{class:"card"},
+      el("div",{class:"card-head"},el("h2",null,"Challan header"),
+        el("span",{class:"hint"},"Client, contract, item and lot — printed at the top of the challan")),
+      el("div",{class:"card-body"},el("div",{class:"formgrid"},
+        el("label",{class:"field"},"Challan no.",F.challan),
+        el("label",{class:"field req"},"Date",el("span",{class:"rq"},"*"),F.date),
+        el("label",{class:"field req",style:"grid-column:span 2"},"Client",el("span",{class:"rq"},"*"),F.clientC),
+        el("label",{class:"field",style:"grid-column:span 2"},"Link to order",F.orderSel),
+        el("label",{class:"field"},"PO / contract no.",F.po),
+        el("label",{class:"field req",style:"grid-column:span 2"},"Item / yarn spec",el("span",{class:"rq"},"*"),F.itemC),
+        el("label",{class:"field"},"Lot",F.lot),
+        el("label",{class:"field"},"Cone colour",F.cone),
+        el("label",{class:"field"},"Vehicle no.",F.vehicle),
+        el("label",{class:"field"},"Billty no.",F.billty),
+        el("label",{class:"field"},"Received by",F.receiver),
+        el("label",{class:"field",style:"grid-column:1/-1"},"Notes / delivery terms",F.notes)))),
+    el("div",{class:"card"},
+      el("div",{class:"card-head"},el("h2",null,"Bags loaded"),
+        el("span",{class:"hint"},"Machine · weight · cones, one row per bag. Enter after cones starts the next bag."),
+        el("button",{class:"btn btn-sm btn-primary",onclick:addBag},svgIcon("plus"),"Add bag")),
+      el("div",{class:"tablewrap",style:"max-height:360px;overflow:auto"},el("table",{class:"bagtable"},
+        el("thead",null,el("tr",null,el("th",null,"Bag"),el("th",null,"Machine no."),
+          el("th",null,"Weight (kg)"),el("th",null,"Cones"),el("th",null,""))),tbody)),
+      manual,
+      el("div",{class:"bagfoot"},
+        el("div",{class:"ft"},el("span",{class:"k"},"Bags"),tBags),
+        el("div",{class:"ft"},el("span",{class:"k"},"Net kg"),tKg),
+        el("div",{class:"ft"},el("span",{class:"k"},"Net lbs"),tLbs),
+        el("div",{class:"ft"},el("span",{class:"k"},"Cones"),tCones),
+        el("div",{class:"grow"}),
+        el("button",{class:"btn",onclick:()=>save(false)},edit?"Save changes":"Save challan"),
+        el("button",{class:"btn btn-primary",onclick:()=>save(true)},svgIcon("print"),"Save & print"),
+        status)));
+  recalc();
+  return wrap;
+}
+const newChallan=()=>openDrawer("New delivery challan","Recorded first, then printed",h=>h.append(challanForm(null)));
+const editDelivery=r=>openDrawer("Edit challan "+(r.challan||"—"),r.client+" · "+fmtDate(r.date),h=>h.append(challanForm(r)));
+
+/* Read-only view of a challan exactly as it was sent */
+function viewChallan(r){
+  const bl=(r.bl||[]),cones=rowCones(r);
+  openDrawer("Challan "+(r.challan||"—"),r.client+"  ·  "+fmtDate(r.date),host=>{
+    host.append(el("div",{class:"kv"},
+      kv("Client",r.client),
+      r.po?kv("PO / contract",r.po):null,
+      kv("Item",r.item),
+      kv("Lot",r.lot||"any"),
+      r.cone?kv("Cone colour",r.cone):null,
+      kv("Vehicle no.",r.vehicle||"—"),
+      r.billty?kv("Billty no.",r.billty):null,
+      r.receiver?kv("Received by",r.receiver):null));
+    host.append(tileGroup("Totals on the challan",null,[
+      tile("Total bags",nf(r.bags),"bags"),
+      tile("Total cones",cones==null?"—":nf(cones),"cones"),
+      tile("Net kg",nf(r.kg,2),"kg","accent"),
+      tile("Net lbs",nf(r.lbs,2),"lbs","accent")]));
+    if(bl.length){
+      const tb=el("tbody");
+      bl.forEach((b,i)=>tb.append(el("tr",null,el("td",{class:"n"},String(i+1)),
+        el("td",{class:"mono"},b.m||"—"),el("td",{class:"n"},nf(b.k,2)),el("td",{class:"n"},nf(b.c)))));
+      host.append(el("div",{class:"card"},
+        el("div",{class:"card-head"},el("h2",null,"Bags on this challan"),el("span",{class:"hint"},bl.length+" bags")),
+        el("div",{class:"tablewrap"},el("table",null,
+          el("thead",null,el("tr",null,el("th",{class:"n"},"Bag"),el("th",null,"Machine no."),
+            el("th",{class:"n"},"Weight (kg)"),el("th",{class:"n"},"Cones"))),tb,
+          el("tfoot",null,el("tr",null,el("th",{colspan:"2"},"Total"),
+            el("th",{class:"n"},nf(r.kg,2)),el("th",{class:"n"},cones==null?"—":nf(cones))))))));
+    }else{
+      host.append(el("div",{class:"notice"},
+        "No bag-wise detail on this one — it came across from the Excel import, which only carried the challan totals."));
+    }
+    if(r.notes)host.append(el("div",{class:"notice"},el("strong",null,"Terms / notes: "),r.notes));
+  },[
+    el("button",{class:"btn btn-sm btn-primary",onclick:()=>printChallan(r)},svgIcon("print"),"Print"),
+    el("button",{class:"btn btn-sm",onclick:()=>editDelivery(r)},svgIcon("edit"),"Edit"),
+    el("button",{class:"btn btn-sm btn-danger",onclick:async()=>{closeDrawer();await removeDelivery(r);}},svgIcon("trash"),"Delete"),
+  ]);
+}
+
+/* ---- printable challan (matches the paper form: two bag columns, totals down the right) ---- */
+function challanHTML(list){
+  const all=Array.isArray(list)?list:[list];
+  const one=c=>{
+  const bl=(c.bl||[]).filter(b=>b);
+  const half=Math.max(1,Math.ceil(bl.length/2));
+  const A=bl.slice(0,half),B=bl.slice(half);
+  const subA=A.reduce((s,b)=>s+(b.k||0),0),subB=B.reduce((s,b)=>s+(b.k||0),0);
+  let rows="";
+  for(let i=0;i<half;i++){
+    const a=A[i],b=B[i];
+    rows+=`<tr><td class="ix">${a?i+1:""}</td><td>${xe(a?a.m:"")}</td><td class="r">${a?nf(a.k,2):""}</td><td class="r">${a&&a.c!=null?nf(a.c):""}</td>
+    <td class="gap"></td>
+    <td class="ix">${b?half+i+1:""}</td><td>${xe(b?b.m:"")}</td><td class="r">${b?nf(b.k,2):""}</td><td class="r">${b&&b.c!=null?nf(b.c):""}</td></tr>`;
+  }
+  const cones=bl.length?bl.reduce((s,b)=>s+(b.c||0),0):(c.cones!=null?c.cones:null);
+  const conA=A.reduce((s,b)=>s+(b.c||0),0),conB=B.reduce((s,b)=>s+(b.c||0),0);
+  const bagBlock=bl.length?`<table class="bags"><thead><tr>
+      <th class="ix">#</th><th>Machine</th><th class="r">Kg</th><th class="r">Cones</th><th class="gap"></th>
+      <th class="ix">#</th><th>Machine</th><th class="r">Kg</th><th class="r">Cones</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><th colspan="2">Subtotal</th><th class="r">${nf(subA,2)}</th><th class="r">${nf(conA)}</th><th class="gap"></th>
+      <th colspan="2">${B.length?"Subtotal":""}</th><th class="r">${B.length?nf(subB,2):""}</th><th class="r">${B.length?nf(conB):""}</th></tr></tfoot></table>`
+    :`<p class="nobags">Bag-wise detail not recorded for this challan.</p>`;
+  const copy=label=>`<section class="challan">
+    <header>
+      <div class="co">${xe(COMPANY)}<small>${xe(COMPANY_SUB)}</small></div>
+      <div class="cn"><span class="copytag">${xe(label)}</span>
+        <span class="t">Delivery Challan</span><span class="no">${xe(c.challan||"—")}</span>
+        <span class="dt">${xe(fmtDate(c.date))}</span></div>
+    </header>
+    <div class="grid">
+      <div class="party">
+        <div class="line"><span class="lb">Client</span><span class="vl big">${xe(c.client)}</span></div>
+        ${c.po?`<div class="line"><span class="lb">PO / Contract</span><span class="vl str">${xe(c.po)}</span></div>`:""}
+        <div class="line"><span class="lb">Item</span><span class="vl str">${xe(c.item)}${c.lot?` <b class="lot">${xe(c.lot)}</b>`:""}</span></div>
+        ${c.cone?`<div class="line"><span class="lb">Cone colour</span><span class="vl str">${xe(c.cone)}</span></div>`:""}
+        ${c.billty?`<div class="line"><span class="lb">Billty No.</span><span class="vl">${xe(c.billty)}</span></div>`:""}
+      </div>
+      <div class="tot">
+        <div class="tl"><span>Total Bags</span><b>${nf(c.bags)}</b></div>
+        <div class="tl"><span>Total Cones</span><b>${cones!=null?nf(cones):"—"}</b></div>
+        <div class="tl hi"><span>Net Kg</span><b>${nf(c.kg,2)}</b></div>
+        <div class="tl hi"><span>Net Lbs</span><b>${nf(c.lbs,2)}</b></div>
+        <div class="tl"><span>Vehicle No.</span><b>${xe(c.vehicle||"—")}</b></div>
+      </div>
+    </div>
+    ${bagBlock}
+    ${c.notes?`<p class="terms"><b>Terms / notes:</b> ${xe(c.notes)}</p>`:""}
+    <div class="sign">
+      <div><span class="sl"></span><b>Received by${c.receiver?" — "+xe(c.receiver):""}</b><br><small>Driver's name &amp; signature</small></div>
+      <div><span class="sl"></span><b>For ${xe(COMPANY)}</b><br><small>Authorised signature</small></div>
+    </div>
+  </section>`;
+  const twoUp=bl.length<=20;
+  return `<div class="sheet${twoUp?"":" tall"}">${copy("Original — Head Office")}
+    ${twoUp?`<div class="tear"><span>✂ tear here — top copy to head office, bottom copy to the driver</span></div>`:""}
+    ${copy("Driver's Copy")}</div>`;
+  };
+  const title=all.length===1?("Challan "+(all[0].challan||"")+" — "+all[0].client):(all.length+" challans");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${xe(title)} — ${xe(COMPANY)}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#EFEEE9;color:#121722;font:12.5px/1.42 "IBM Plex Sans",system-ui,sans-serif}
+.bar{position:sticky;top:0;background:#1F3864;color:#fff;padding:11px 20px;display:flex;gap:14px;align-items:center;font-size:13px;z-index:9;flex-wrap:wrap}
+.bar button{background:#fff;color:#1F3864;border:0;padding:8px 16px;border-radius:7px;font:inherit;font-weight:700;cursor:pointer}
+.bar em{font-style:normal;font-size:12px;flex:1 1 100%;background:rgba(255,255,255,.12);padding:7px 11px;border-radius:6px;line-height:1.5}
+.bar em b{color:#FFD98A}
+.sheet{max-width:860px;margin:18px auto;background:#fff;padding:22px 26px;box-shadow:0 2px 14px rgba(0,0,0,.10)}
+.challan{position:relative}
+.copytag{display:inline-block;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#8C6A24;font-weight:700;border:1px solid #D9C89C;padding:2px 7px;border-radius:3px;margin-bottom:4px;white-space:nowrap}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:2.5px solid #1F3864;padding-bottom:8px}
+.co{font-family:"IBM Plex Serif",Georgia,serif;font-size:18px;font-weight:600;color:#1F3864;letter-spacing:-.02em;line-height:1.15}
+.co small{display:block;font-family:"IBM Plex Sans",sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8C6A24;font-weight:700;margin-top:3px}
+.cn{text-align:right}
+.cn .t{display:block;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#4A5162;font-weight:700}
+.cn .no{display:block;font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;color:#1F3864;line-height:1.1}
+.cn .dt{display:block;font-size:11.5px;color:#333A4A;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 218px;gap:18px;margin:9px 0 8px}
+.line{display:flex;gap:9px;padding:2px 0;align-items:baseline}
+.lb{flex:0 0 108px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6B7180;font-weight:700}
+.vl{font-size:13px;font-weight:600;color:#121722}
+.vl.str{font-size:14px;font-weight:700}
+.vl.big{font-size:16.5px;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:#1F3864}
+.lot{background:#F2EAD8;border:1px solid #D9C89C;color:#8C6A24;padding:0 5px;border-radius:3px;font-size:12.5px}
+.tot{border:1.5px solid #1F3864}
+.tl{display:flex;justify-content:space-between;align-items:baseline;padding:4.5px 10px;border-bottom:1px solid #E4E1D9}
+.tl:last-child{border-bottom:0}
+.tl span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#4A5162;font-weight:700}
+.tl b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl.hi{background:#EFF3FA}
+.tl.hi b{font-size:16px;color:#1F3864}
+table.bags{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:2px}
+table.bags th{background:#1F3864;color:#fff;padding:4px 7px;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;text-align:left;font-weight:700}
+table.bags td{padding:2.6px 7px;border-bottom:1px solid #E8E6E0;font-weight:600}
+table.bags .r{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+table.bags .ix{width:24px;color:#8A90A1;font-family:"IBM Plex Mono",monospace;text-align:center;font-weight:500}
+table.bags .gap{width:14px;background:#fff;border:0}
+table.bags tfoot th{background:#EFF3FA;color:#1F3864;border-top:1.5px solid #1F3864;font-size:10.5px;text-transform:none;letter-spacing:0;padding:4px 7px}
+table.bags tfoot th.r{font-family:"IBM Plex Mono",monospace}
+.nobags{font-size:11.5px;color:#6B7180;border:1px dashed #C9C4B8;padding:9px;text-align:center;margin:4px 0}
+.terms{font-size:11px;color:#2B3242;background:#F6F5F1;border-left:3px solid #8C6A24;padding:6px 10px;margin:8px 0 0;font-weight:500}
+.sign{display:flex;gap:52px;margin-top:16px}
+.sign div{flex:1;font-size:11px;color:#2B3242}
+.sign b{font-weight:700}
+.sign .sl{display:block;border-top:1px solid #6E6E6E;margin-bottom:4px;height:26px}
+.sign small{color:#8A90A1;font-size:9px;font-weight:500}
+.tear{border-top:2px dashed #9AA0AE;margin:13px 0 11px;text-align:center;height:0}
+.tear span{display:inline-block;position:relative;top:-8px;background:#fff;padding:0 12px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8A90A1;font-weight:600}
+@media print{
+  @page{size:A4 portrait;margin:9mm}
+  body{background:#fff;font-size:11.5px}
+  .bar{display:none}
+  .sheet{margin:0;padding:0;box-shadow:none;max-width:none;break-after:page}
+  .sheet:last-of-type{break-after:auto}
+  .sheet.tall .challan{break-after:page}
+  .sheet.tall .challan:last-child{break-after:auto}
+  .challan{break-inside:avoid}
+  /* two-up: each copy fills exactly half the sheet so the tear line lands
+     dead centre and the signatures sit at the foot of each half */
+  .sheet:not(.tall){height:279mm;display:flex;flex-direction:column;font-size:10.5px}
+  .sheet:not(.tall) .challan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  .sheet:not(.tall) .challan .sign{margin-top:auto;padding-top:6px}
+  .sheet:not(.tall) .tear{flex:0 0 auto}
+  .sheet:not(.tall) header{padding-bottom:5px}
+  .sheet:not(.tall) .co{font-size:15.5px}
+  .sheet:not(.tall) .co small{font-size:8px;margin-top:2px}
+  .sheet:not(.tall) .cn .no{font-size:18px}
+  .sheet:not(.tall) .cn .dt{font-size:10px}
+  .sheet:not(.tall) .copytag{margin-bottom:2px;padding:1px 6px}
+  .sheet:not(.tall) .grid{margin:5px 0 4px;gap:13px;grid-template-columns:1fr 196px}
+  .sheet:not(.tall) .line{padding:1px 0}
+  .sheet:not(.tall) .vl{font-size:11.5px}
+  .sheet:not(.tall) .vl.str{font-size:12px}
+  .sheet:not(.tall) .vl.big{font-size:14px}
+  .sheet:not(.tall) .tl{padding:2.6px 9px}
+  .sheet:not(.tall) .tl b{font-size:12.5px}
+  .sheet:not(.tall) .tl.hi b{font-size:13.5px}
+  .sheet:not(.tall) table.bags{font-size:10px}
+  .sheet:not(.tall) table.bags th{padding:2.6px 6px}
+  .sheet:not(.tall) table.bags td{padding:1.5px 6px}
+  .sheet:not(.tall) table.bags tfoot th{font-size:9.5px;padding:2.6px 6px}
+  .sheet:not(.tall) .terms{margin-top:5px;padding:4px 9px;font-size:9.5px}
+  .sheet:not(.tall) .sign{margin-top:8px;gap:44px}
+  .sheet:not(.tall) .sign .sl{height:16px;margin-bottom:3px}
+  .sheet:not(.tall) .sign div{font-size:10px}
+  .sheet:not(.tall) .sign small{font-size:8.5px}
+  .sheet:not(.tall) .tear{margin:7px 0 6px}
+  .sheet:not(.tall) .tear span{font-size:8px}
+  .tear span{background:#fff}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+}
+</style></head><body>
+<div class="bar"><button onclick="window.print()">Print / Save as PDF</button>
+<span>${all.length===1?"One sheet, both copies — tear along the dotted line.":all.length+" challans, one sheet each — tear along the dotted line."}</span>
+<em><b>Before you print:</b> set <b>Layout → Portrait</b>, then open <b>More settings</b> and untick <b>Headers and footers</b> — that is what puts the date, file name and page number on the paper. Your browser remembers both after the first time.</em></div>
+${all.map(one).join("")}
+</body></html>`;
+}
+const printChallan=c=>download("challan-"+(c.challan||todayISO())+".html",challanHTML([c]));
+async function printDayChallans(rows){
+  if(!rows.length){toast("Nothing to print in this selection");return;}
+  const CAP=40;
+  if(rows.length>CAP&&!await ask("Print "+CAP+" challans?",
+    `${nf(rows.length)} deliveries match the current filters. Only the ${CAP} most recent will be printed — narrow the date filter to print a specific day.`,
+    "Print "+CAP))return;
+  const list=rows.slice(0,CAP).slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:
+    String(a.challan||"").localeCompare(String(b.challan||""),undefined,{numeric:true}));
+  download("challans-"+todayISO()+".html",challanHTML(list));
+}
+async function addDelivery(rec){
+  await ensureHistory();
+  const key=rec.date.slice(0,7);
+  if(!S.months.has(key))S.months.set(key,{month:key,rows:[]});
+  const n=parseInt(String(rec.challan||"").replace(/[^0-9]/g,""),10);
+  if(!isNaN(n)&&n<100000){
+    const prev=parseInt(String(S.meta.lastChallanNo||0),10)||0;
+    if(n>=prev){S.meta=Object.assign({},S.meta,{lastChallanNo:n,lastChallanDate:rec.date});enqueue(saveMeta);}
+  }
+  S.months.get(key).rows.push(Object.assign({id:uid("n"),src:"app",note:""},rec));
+  invalidate();learnNames(rec);
+  enqueue(()=>saveMonth(key));
+  toast("Saved · "+rec.client+" · "+(rec.challan||fmtDate(rec.date)));
+}
+async function updateDelivery(id,rec){
+  await ensureHistory();
+  let oldKey=null;for(const[k,m]of S.months)if(m.rows.some(r=>r.id===id))oldKey=k;
+  if(!oldKey)return;
+  const newKey=rec.date.slice(0,7),m=S.months.get(oldKey),i=m.rows.findIndex(r=>r.id===id);
+  const merged=Object.assign({},m.rows[i],rec);
+  if(newKey===oldKey){m.rows[i]=merged;invalidate();learnNames(rec);enqueue(()=>saveMonth(oldKey));}
+  else{m.rows.splice(i,1);
+    if(!S.months.has(newKey))S.months.set(newKey,{month:newKey,rows:[]});
+    S.months.get(newKey).rows.push(merged);invalidate();learnNames(rec);
+    enqueue(async()=>{await saveMonth(oldKey);await saveMonth(newKey);});}
+  toast("Delivery updated");
+}
+async function removeDelivery(r){
+  const ok=await ask("Delete this delivery?",
+    `Challan ${r.challan||"—"} · ${r.client} · ${fmtDate(r.date)} · ${nf(r.bags)} bags · ${nf(r.kg,2)} kg. This cannot be undone.`,
+    "Delete",true);
+  if(!ok)return;
+  const key=r.date.slice(0,7),m=S.months.get(key);if(!m)return;
+  m.rows=m.rows.filter(x=>x.id!==r.id);invalidate();
+  enqueue(()=>saveMonth(key));
+  toast("Delivery deleted");render();
+}
+function learnNames(rec){
+  if(rec.client&&!S.clients.includes(rec.client)){S.clients.push(rec.client);S.clients.sort();enqueue(()=>saveRefs("clients"));}
+  if(rec.item&&!S.items.includes(rec.item)){S.items.push(rec.item);S.items.sort();enqueue(()=>saveRefs("items"));}
+}
+
+/* ============ ORDERS ============ */
+function viewOrders(root,acts){
+  const stats=S.orders.map(o=>({o,st:orderStats(o)}));
+  const open=stats.filter(x=>!isClosed(x.o));
+  head("Contracts","Open Orders",`${open.length} open · ${nf(open.reduce((s,x)=>s+Math.max(0,x.st.openLbs),0),0)} lbs still to deliver`);
+  acts.append(
+    el("button",{class:"btn",onclick:()=>download("yarn-order-book.html",orderBookReport())},svgIcon("doc"),"Report"),
+    el("button",{class:"btn",onclick:exportOrdersXlsx},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn btn-primary",onclick:()=>editOrder(null)},svgIcon("plus"),"New order"));
+
+  const contLbs=open.reduce((s,x)=>s+(x.o.contractedLbs||0),0);
+  const delLbs=open.reduce((s,x)=>s+x.st.lbs,0);
+  const contBags=open.reduce((s,x)=>s+(x.o.contractedBags||0),0);
+  const delBags=open.reduce((s,x)=>s+x.st.bags,0);
+  root.append(tileGroup("Open contracts","Everything not yet marked Closed",[
+    tile("Orders open",nf(open.length),"contracts","accent"),
+    tile("Contracted",nf(contBags),"bags"),
+    tile("Delivered",nf(delBags),"bags"),
+    tile("Still to deliver",nf(Math.max(0,contBags-delBags)),"bags","accent")]));
+  root.append(tileGroup("By weight",null,[
+    tile("Contracted",nf(contLbs,0),"lbs"),
+    tile("Delivered",nf(delLbs,0),"lbs"),
+    tile("Still to deliver",nf(Math.max(0,contLbs-delLbs),0),"lbs","accent"),
+    tile("Fulfilled",contLbs>0?Math.round(delLbs/contLbs*100)+"%":"—","of contracted lbs","accent")]));
+
+  if(!S.orders.length){
+    root.append(el("div",{class:"card"},el("div",{class:"empty"},
+      el("strong",null,"No orders yet"),"Add a contract and every matching delivery is counted against it automatically.")));
+    return;
+  }
+  const showAll=S.ord.show==="all";
+  const list=(showAll?stats:open).slice().sort((a,b)=>{
+    const ac=isClosed(a.o),bc=isClosed(b.o);
+    if(ac!==bc)return ac?1:-1;return b.st.openLbs-a.st.openLbs;});
+  const tb=el("tbody");
+  list.forEach(({o,st})=>{
+    const b=orderBadge(o,st);
+    tb.append(el("tr",{class:"clickable "+b.stripe,onclick:e=>{if(!e.target.closest("button"))openOrder(o.id);}},
+      el("td",{class:"mono"},o.id,o.po?el("span",{class:"hint",style:"display:block;font-size:10.5px"},"PO "+o.po):null),
+      el("td",null,o.client),el("td",null,o.item),
+      el("td",null,o.lot?el("span",{class:"chip"},o.lot):el("span",{class:"hint"},"any")),
+      el("td",null,fmtDate(o.dateOpened)),
+      el("td",{class:"n"},nf(o.contractedBags),el("br"),el("span",{class:"hint num"},nf(o.contractedLbs,0)+" lbs")),
+      el("td",{class:"n"},nf(st.bags),el("br"),el("span",{class:"hint num"},nf(st.lbs,0)+" lbs")),
+      el("td",{class:"n"},nf(Math.max(0,st.openBags)),el("br"),el("span",{class:"hint num"},nf(Math.max(0,st.openLbs),0)+" lbs")),
+      el("td",null,progress(st.pct)),el("td",null,el("span",{class:"badge "+b.cls},b.txt)),
+      el("td",{style:"text-align:right"},el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Edit order",onclick:()=>editOrder(o)},svgIcon("edit")))));
+  });
+  root.append(el("div",{class:"card"},
+    el("div",{class:"card-head"},el("h2",null,"Order book"),
+      el("span",{class:"hint"},"Click any order to see every delivery counted against it"),
+      el("button",{class:"btn btn-sm",onclick:()=>{S.ord.show=showAll?"open":"all";render();}},showAll?"Show open only":"Show closed too")),
+    el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+      el("th",null,"Order"),el("th",null,"Client"),el("th",null,"Item"),el("th",null,"Lot"),el("th",null,"Opened"),
+      el("th",{class:"n"},"Contracted"),el("th",{class:"n"},"Delivered"),el("th",{class:"n"},"Open"),
+      el("th",null,"Progress"),el("th",null,"Status"),el("th",null,""))),tb))));
+  root.append(el("div",{class:"notice"},
+    "A delivery counts toward an order when the client and item match, the lot matches (blank lot = any lot), and the delivery date is on or after the order date. Setting a closing date also stops counting deliveries after that date."));
+}
+function orderBookReport(){
+  const stats=S.orders.map(o=>({o,st:orderStats(o)}));
+  const open=stats.filter(x=>!isClosed(x.o));
+  const contLbs=open.reduce((s,x)=>s+(x.o.contractedLbs||0),0),delLbs=open.reduce((s,x)=>s+x.st.lbs,0);
+  return reportHTML({title:"Open Order Book",context:"All contracts as at "+fmtDate(todayISO()),
+    kpis:[{k:"Orders open",v:nf(open.length),u:"contracts"},
+      {k:"Contracted",v:nf(contLbs,0),u:"lbs"},{k:"Delivered",v:nf(delLbs,0),u:"lbs"},
+      {k:"Still to deliver",v:nf(Math.max(0,contLbs-delLbs),0),u:"lbs"}],
+    sections:[{heading:"Order book",
+      cols:[{label:"Order",key:"a",fmt:r=>r.o.id},{label:"Client",key:"b",fmt:r=>r.o.client},
+        {label:"Item",key:"c",fmt:r=>r.o.item},{label:"Lot",key:"d",fmt:r=>r.o.lot||"any"},
+        {label:"Opened",key:"e",fmt:r=>fmtDate(r.o.dateOpened)},{label:"Status",key:"f",fmt:r=>orderBadge(r.o,r.st).txt},
+        {label:"Contracted Bags",key:"g",align:"r",fmt:r=>nf(r.o.contractedBags)},
+        {label:"Delivered Bags",key:"h",align:"r",fmt:r=>nf(r.st.bags)},
+        {label:"Open Bags",key:"i",align:"r",fmt:r=>nf(Math.max(0,r.st.openBags))},
+        {label:"Contracted Lbs",key:"j",align:"r",fmt:r=>nf(r.o.contractedLbs,0)},
+        {label:"Delivered Lbs",key:"k",align:"r",fmt:r=>nf(r.st.lbs,0)},
+        {label:"Open Lbs",key:"l",align:"r",fmt:r=>nf(Math.max(0,r.st.openLbs),0)},
+        {label:"% Done",key:"m",align:"r",fmt:r=>Math.round(r.st.pct)+"%"}],
+      rows:stats.sort((a,b)=>{const ac=isClosed(a.o),bc=isClosed(b.o);return ac!==bc?(ac?1:-1):b.st.openLbs-a.st.openLbs;})}]});
+}
+function openOrder(id){
+  const o=S.orders.find(x=>x.id===id);if(!o)return;
+  const st=orderStats(o),b=orderBadge(o,st);
+  const rows=st.rows.slice().sort((a,c)=>a.date<c.date?-1:a.date>c.date?1:String(a.challan||"").localeCompare(String(c.challan||""),undefined,{numeric:true}));
+  openDrawer(o.id+" · "+o.client,o.item+(o.lot?"  ·  lot "+o.lot:"  ·  any lot"),host=>{
+    host.append(el("div",{class:"kv"},
+      kv("Client",o.client),kv("Item",o.item),kv("Lot",o.lot||"any lot"),
+      o.po?kv("PO / contract",o.po):null,
+      kv("Opened",fmtDate(o.dateOpened)),kv("Status",el("span",{class:"badge "+b.cls},b.txt)),
+      o.closingDate?kv("Closed",fmtDate(o.closingDate)):null));
+    host.append(tileGroup("Bags",null,[
+      tile("Contracted",nf(o.contractedBags),"bags"),tile("Delivered",nf(st.bags),"bags"),
+      tile("Open",nf(Math.max(0,st.openBags)),"bags","accent")],"t3"));
+    host.append(tileGroup("Weight",null,[
+      tile("Contracted",nf(o.contractedLbs,0),"lbs"),tile("Delivered",nf(st.lbs,0),"lbs"),
+      tile("Open",nf(Math.max(0,st.openLbs),0),"lbs","accent")],"t3"));
+    host.append(el("div",{class:"card"},el("div",{class:"card-body"},progress(st.pct))));
+    if(o.notes)host.append(el("div",{class:"notice"},o.notes));
+    const tb=el("tbody");
+    const totCones=rows.reduce((s,r)=>s+(rowCones(r)||0),0);
+    rows.forEach(r=>{const c=rowCones(r);tb.append(el("tr",null,
+      el("td",null,fmtDate(r.date)),el("td",{class:"mono"},r.challan||"—"),el("td",{class:"mono"},r.vehicle||"—"),
+      el("td",null,r.lot||"—"),el("td",{class:"n"},nf(r.bags)),el("td",{class:"n"},c==null?"—":nf(c)),
+      el("td",{class:"n"},nf(r.kg,2)),el("td",{class:"n"},nf(r.lbs,2))));});
+    host.append(el("div",{class:"card"},
+      el("div",{class:"card-head"},el("h2",null,"Deliveries against this order"),
+        el("span",{class:"hint"},rows.length+" challan"+(rows.length===1?"":"s"))),
+      rows.length?el("div",{class:"tablewrap"},el("table",null,
+        el("thead",null,el("tr",null,el("th",null,"Date"),el("th",null,"Challan"),el("th",null,"Vehicle"),el("th",null,"Lot"),
+          el("th",{class:"n"},"Bags"),el("th",{class:"n"},"Cones"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"))),tb,
+        el("tfoot",null,el("tr",null,el("th",{colspan:"4"},"Total delivered"),
+          el("th",{class:"n"},nf(st.bags)),el("th",{class:"n"},totCones?nf(totCones):"—"),
+          el("th",{class:"n"},nf(st.kg,2)),el("th",{class:"n"},nf(st.lbs,2))))))
+        :el("div",{class:"empty"},"Nothing delivered against this order yet.")));
+  },[
+    el("button",{class:"btn btn-sm",onclick:()=>download(o.id+"-statement.html",orderStatement(o,st,rows))},svgIcon("doc"),"Statement"),
+    el("button",{class:"btn btn-sm",onclick:()=>exportDeliveriesXlsx(rows,"Order "+o.id+" — Delivery Statement",
+      o.client+" · "+o.item+(o.lot?" · lot "+o.lot:"")+" · opened "+fmtDate(o.dateOpened),o.id+"-statement.xlsx")},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn btn-sm",onclick:()=>editOrder(o)},svgIcon("edit"),"Edit"),
+  ]);
+}
+const rowCones=r=>(r.bl&&r.bl.length)?r.bl.reduce((s,b)=>s+(b.c||0),0):(r.cones!=null?r.cones:null);
+function orderStatement(o,st,rows){
+  const cones=rows.reduce((s,r)=>s+(rowCones(r)||0),0);
+  return reportHTML({title:"Order Statement — "+o.id,
+    context:`${o.client}  ·  ${o.item}${o.lot?"  ·  lot "+o.lot:""}${o.po?"  ·  PO/Contract "+o.po:""}  ·  opened ${fmtDate(o.dateOpened)}`,
+    kpis:[
+      {k:"Contracted",pairs:[{v:nf(o.contractedBags),u:"bags"},{v:nf(o.contractedLbs,0),u:"lbs"}]},
+      {k:"Delivered",pairs:[{v:nf(st.bags),u:"bags"},{v:cones?nf(cones):"—",u:"cones"}]},
+      {k:"Still to deliver",pairs:[{v:nf(Math.max(0,st.openBags)),u:"bags"},{v:nf(Math.max(0,st.openLbs),0),u:"lbs"}]}],
+    sections:[{heading:"Deliveries against this order",
+      note:rows.length?null:"Nothing delivered against this order yet.",
+      cols:[{label:"Date",key:"date",fmt:r=>fmtDate(r.date)},{label:"Challan No.",key:"challan",fmt:r=>r.challan||"—"},
+        {label:"Lot",key:"lot",fmt:r=>r.lot||"—"},{label:"Vehicle",key:"vehicle",fmt:r=>r.vehicle||"—"},
+        {label:"Bags",key:"bags",align:"r",fmt:r=>nf(r.bags)},
+        {label:"Cones",key:"cones",align:"r",fmt:r=>{const c=rowCones(r);return c==null?"—":nf(c);}},
+        {label:"Kg",key:"kg",align:"r",fmt:r=>nf(r.kg,2)},
+        {label:"Lbs",key:"lbs",align:"r",fmt:r=>nf(r.lbs,2)}],
+      rows,totals:{bags:nf(st.bags),cones:cones?nf(cones):"—",kg:nf(st.kg,2),lbs:nf(st.lbs,2)}}],
+    footNote:"Order "+o.id+" · "+Math.round(st.pct)+"% fulfilled"});
+}
+const kv=(k,v)=>el("div",null,el("span",{class:"k"},k),el("span",{class:"v"},v));
+function editOrder(o){
+  const isNew=!o;
+  const r=o||{client:"",item:"",lot:"",po:"",contractedBags:"",contractedLbs:"",dateOpened:todayISO(),status:"Open",closingDate:"",notes:""};
+  const f={};
+  f.clientC=combo({value:r.client,list:S.clients,placeholder:"Type a client…",allowFree:true,onChange:()=>{}});
+  f.itemC=combo({value:r.item,list:S.items,placeholder:"Type an item…",allowFree:true,onChange:()=>{}});
+  f.lot=el("input",{value:r.lot||"",placeholder:"blank = any lot",maxlength:"12"});
+  f.po=el("input",{value:r.po||"",placeholder:"optional — client's reference"});
+  f.cb=el("input",{type:"number",step:"1",value:r.contractedBags==null?"":r.contractedBags});
+  f.cl=el("input",{type:"number",step:"0.01",value:r.contractedLbs==null?"":r.contractedLbs});
+  f.opened=el("input",{type:"date",value:r.dateOpened||todayISO()});
+  f.status=el("select",null,["Open","Closed"].map(s=>el("option",{value:s,selected:s===r.status?true:null},s)));
+  f.closing=el("input",{type:"date",value:r.closingDate||""});
+  f.notes=el("textarea",{placeholder:"Payment or delivery terms, packing instructions — carried onto every challan raised against this order"},r.notes||"");
+  const status=el("div",{class:"hint"});
+  const save=async()=>{
+    const rec={client:f.clientC.getValue(),item:f.itemC.getValue(),lot:f.lot.value.trim(),po:f.po.value.trim(),
+      contractedBags:num(f.cb.value),contractedLbs:num(f.cl.value),dateOpened:f.opened.value,
+      status:f.status.value,closingDate:f.closing.value||"",notes:f.notes.value.trim()};
+    if(!rec.client||!rec.item){status.textContent="Client and item are required.";status.style.color="var(--crit)";return;}
+    if(rec.contractedBags==null&&rec.contractedLbs==null){status.textContent="Enter contracted bags or contracted lbs.";status.style.color="var(--crit)";return;}
+    let order;
+    if(isNew){
+      const seq=S.meta.nextOrderSeq||(S.orders.length+1);
+      order=Object.assign({id:"ORD-"+String(seq).padStart(4,"0"),createdAt:todayISO()},rec);
+      S.orders.push(order);S.meta=Object.assign({},S.meta,{nextOrderSeq:seq+1});
+      enqueue(async()=>{await saveOrderDoc(order);await saveMeta();});
+      toast("Order "+order.id+" created");
+    }else{order=Object.assign(o,rec);enqueue(()=>saveOrderDoc(order));toast("Order "+order.id+" updated");}
+    learnNames(rec);closeDrawer();render();
+  };
+  openDrawer(isNew?"New order":"Edit "+o.id,isNew?"Contract a client order":o.client,host=>{
+    host.append(el("div",{class:"card"},el("div",{class:"card-body",style:"display:flex;flex-direction:column;gap:15px"},
+      el("div",{class:"formgrid"},
+        el("label",{class:"field",style:"grid-column:span 2"},"Client",f.clientC),
+        el("label",{class:"field",style:"grid-column:span 2"},"Item / yarn spec",f.itemC),
+        el("label",{class:"field"},"Lot",f.lot),
+        el("label",{class:"field",style:"grid-column:span 2"},"PO / contract no.",f.po),
+        el("label",{class:"field"},"Contracted bags",f.cb),
+        el("label",{class:"field"},"Contracted lbs",f.cl),
+        el("label",{class:"field"},"Date opened",f.opened),
+        el("label",{class:"field"},"Status",f.status),
+        el("label",{class:"field"},"Closing date",f.closing),
+        el("label",{class:"field",style:"grid-column:1/-1"},"Notes / delivery terms",f.notes)),
+      el("div",{style:"display:flex;gap:11px;align-items:center;flex-wrap:wrap"},
+        el("button",{class:"btn btn-primary",onclick:save},"Save order"),
+        el("button",{class:"btn",onclick:closeDrawer},"Cancel"),
+        !isNew?el("button",{class:"btn btn-danger",onclick:async()=>{
+          if(!await ask("Delete order "+o.id+"?","The deliveries recorded against it are not affected — only the contract is removed.","Delete",true))return;
+          S.orders=S.orders.filter(x=>x.id!==o.id);
+          await enqueue(()=>S.db.doc("orders/"+o.id).delete());
+          toast("Order deleted");closeDrawer();render();}},svgIcon("trash"),"Delete"):null,
+        status))));
+    host.append(el("div",{class:"notice"},"Leave Lot blank to count every lot of this item. Contracted lbs drives the progress bar when set."));
+  });
+}
+
+/* ============ REPORTS ============ */
+function viewReports(root,acts){
+  const r=S.rep;
+  head("Analysis","Reports","Client statements, monthly and item summaries");
+  const rows=filterRows({client:r.tab==="client"?r.client:"",from:r.from,to:r.to});
+  const ctx=filterContext({client:r.tab==="client"?r.client:"",from:r.from,to:r.to});
+  acts.append(el("button",{class:"btn",onclick:()=>download("yarn-report.html",
+    dispatchReport(rows,{client:r.tab==="client"?r.client:"",from:r.from,to:r.to},
+      r.tab==="client"?("Client Statement — "+(r.client||"All clients")):"Sales & Dispatch Report"))},svgIcon("doc"),"Report"),
+    el("button",{class:"btn",onclick:()=>exportDeliveriesXlsx(rows,r.tab==="client"?"Client Statement":"Delivery Register",ctx,"yarn-report.xlsx")},svgIcon("grid"),"Excel"));
+
+  const nav=el("div",{class:"subnav"});
+  [["client","Client statement"],["monthly","Monthly summary"],["item","Item summary"]].forEach(([id,label])=>
+    nav.append(el("button",{type:"button","aria-selected":r.tab===id?"true":"false",onclick:()=>{r.tab=id;render();}},label)));
+  root.append(el("div",{class:"card"},nav,el("div",{class:"card-body"},
+    el("div",{style:"display:flex;gap:13px;flex-wrap:wrap;align-items:flex-end"},
+      r.tab==="client"?el("div",{style:"flex:2 1 260px"},comboField("Client",{value:r.client,list:S.clients,
+        placeholder:"Type a client name…",onChange:v=>{r.client=v;render();}})):null,
+      el("label",{class:"field",style:"flex:1 1 150px"},"From",el("input",{type:"date",value:r.from,onchange:e=>{r.from=e.target.value;render();}})),
+      el("label",{class:"field",style:"flex:1 1 150px"},"To",el("input",{type:"date",value:r.to,onchange:e=>{r.to=e.target.value;render();}})),
+      el("button",{class:"btn btn-ghost",onclick:()=>{S.rep={tab:r.tab,client:"",from:"",to:""};render();}},"Reset")))));
+
+  if(r.tab==="client"&&!r.client){
+    root.append(el("div",{class:"card"},el("div",{class:"empty"},el("strong",null,"Pick a client"),
+      "Start typing a name above — their full delivery history and totals appear here, ready to print or send.")));
+    return;
+  }
+  root.append(tileGroup("Totals",ctx,[
+    tile("Deliveries",nf(rows.length),"challan lines"),tile("Bags",nf(sum(rows,"bags")),"bags"),
+    tile("Weight",nf(sum(rows,"kg"),0),"kg"),tile("Weight",nf(sum(rows,"lbs"),0),"lbs")]));
+
+  if(r.tab==="client"){
+    const tb=el("tbody");
+    rows.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>tb.append(el("tr",null,
+      el("td",null,fmtDate(x.date)),el("td",{class:"mono"},x.challan||"—"),el("td",null,x.item),
+      el("td",null,x.lot||"—"),el("td",{class:"n"},nf(x.bags)),el("td",{class:"n"},nf(x.kg,2)),el("td",{class:"n"},nf(x.lbs,2)))));
+    root.append(el("div",{class:"card"},el("div",{class:"card-head"},el("h2",null,r.client),el("span",{class:"hint"},nf(rows.length)+" deliveries")),
+      el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+        el("th",null,"Date"),el("th",null,"Challan"),el("th",null,"Item"),el("th",null,"Lot"),
+        el("th",{class:"n"},"Bags"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"))),tb,
+        el("tfoot",null,el("tr",null,el("th",{colspan:"4"},"Total"),el("th",{class:"n"},nf(sum(rows,"bags"))),
+          el("th",{class:"n"},nf(sum(rows,"kg"),2)),el("th",{class:"n"},nf(sum(rows,"lbs"),2))))))));
+    return;
+  }
+  const keyOf=r.tab==="monthly"?(x=>x.date.slice(0,7)):(x=>x.item);
+  const g=new Map();
+  rows.forEach(x=>{const k=keyOf(x),v=g.get(k)||{k,n:0,bags:0,kg:0,lbs:0};
+    v.n++;v.bags+=x.bags||0;v.kg+=x.kg||0;v.lbs+=x.lbs||0;g.set(k,v);});
+  const list=[...g.values()].sort((a,b)=>r.tab==="monthly"?(a.k<b.k?1:-1):(b.lbs-a.lbs));
+  const tb=el("tbody");
+  list.forEach(v=>tb.append(el("tr",null,el("td",null,r.tab==="monthly"?monthFull(v.k):v.k),
+    el("td",{class:"n"},nf(v.n)),el("td",{class:"n"},nf(v.bags)),el("td",{class:"n"},nf(v.kg,2)),el("td",{class:"n"},nf(v.lbs,2)))));
+  root.append(el("div",{class:"card"},
+    el("div",{class:"card-head"},el("h2",null,r.tab==="monthly"?"By month":"By item"),el("span",{class:"hint"},list.length+" rows")),
+    el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+      el("th",null,r.tab==="monthly"?"Month":"Item"),el("th",{class:"n"},"Deliveries"),
+      el("th",{class:"n"},"Bags"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"))),tb,
+      el("tfoot",null,el("tr",null,el("th",null,"Total"),el("th",{class:"n"},nf(rows.length)),
+        el("th",{class:"n"},nf(sum(rows,"bags"))),el("th",{class:"n"},nf(sum(rows,"kg"),2)),
+        el("th",{class:"n"},nf(sum(rows,"lbs"),2))))))));
+}
+
+/* ============ SETUP ============ */
+const SETUP_TABS=[["clients","Clients"],["items","Sales Items"],["suppliers","Suppliers"],
+  ["pitems","Purchase Items"],["colors","Colours"],["data","Data & backup"]];
+const REF_PLACEHOLDER={clients:"New client name",items:"New item / yarn spec",
+  suppliers:"New supplier name",pitems:"New purchase item / yarn spec",colors:"New colour"};
+function viewSetup(root,acts){
+  head("Reference data","Reference Data",
+    `${S.clients.length} clients · ${S.items.length} sales items · ${S.suppliers.length} suppliers · ${S.pitems.length} purchase items · ${S.colors.length} colours`);
+  acts.append(el("button",{class:"btn",onclick:backupJSON},svgIcon("down"),"Full backup"));
+  const which=S.setup.tab;
+  const nav=el("div",{class:"subnav"});
+  SETUP_TABS.forEach(([id,label])=>
+    nav.append(el("button",{type:"button","aria-selected":which===id?"true":"false",onclick:()=>{S.setup.tab=id;render();}},label)));
+  const body=el("div");
+  if(which==="data"){
+    body.append(el("div",{class:"card-body",style:"display:flex;flex-direction:column;gap:17px"},
+      el("div",{class:"tiles t4"},
+        tile("Deliveries",nf(allRows().length),"sales rows"),tile("Receipts",nf(allPRows().length),"purchase rows"),
+        tile("Sales orders",nf(S.orders.length),"contracts"),tile("Purchase orders",nf(S.porders.length),"contracts")),
+      el("div",{class:"notice"},"Every entry, edit and rename saves to this page's own storage the moment you make it — there is no separate save step. The buttons below are for keeping your own copies."),
+      el("div",{style:"display:flex;gap:11px;flex-wrap:wrap"},
+        el("button",{class:"btn",onclick:()=>exportDeliveriesXlsx(allRows(),"Complete Delivery Register","Full history · all clients","yarn-all-deliveries.xlsx")},svgIcon("grid"),"All deliveries (Excel)"),
+        el("button",{class:"btn",onclick:()=>exportPurchasesXlsx(allPRows(),"Complete Purchase Register","Full history · all suppliers","yarn-all-purchases.xlsx")},svgIcon("grid"),"All purchases (Excel)"),
+        el("button",{class:"btn",onclick:exportOrdersXlsx},svgIcon("grid"),"Sales order book (Excel)"),
+        el("button",{class:"btn",onclick:exportPOrdersXlsx},svgIcon("grid"),"Purchase order book (Excel)"),
+        el("button",{class:"btn",onclick:backupJSON},svgIcon("down"),"Full backup (JSON)")),
+      el("div",{class:"hint"},
+        "Demo sales data generated on "+(S.meta.seededAt||"—")+" · "+nf(S.meta.deliveryRows||0)+" rows. "+
+        "Demo purchases generated on "+(S.meta.pSeededAt||"—")+" · "+nf(S.meta.purchaseRows||0)+" rows.")));
+  }else{
+    const ref=REFS[which],list=ref.get(),field=ref.field;
+    const counts=new Map();
+    (ref.side==="sales"?allRows():allPRows()).forEach(r=>{
+      const k=r[field];if(!k)return;counts.set(k,(counts.get(k)||0)+1);});
+    const input=el("input",{placeholder:REF_PLACEHOLDER[which]});
+    const filter=el("input",{type:"search",placeholder:"Filter this list…"});
+    const listBox=el("div",{class:"listedit"});
+    const paint=()=>{
+      listBox.textContent="";
+      const q=filter.value.trim().toLowerCase();
+      const shown=list.filter(n=>!q||n.toLowerCase().includes(q));
+      if(!shown.length)listBox.append(el("div",{class:"empty"},"Nothing matches."));
+      shown.forEach(name=>listBox.append(el("div",{class:"row"},
+        el("span",{class:"nm"},name),el("span",{class:"ct"},nf(counts.get(name)||0)),
+        el("button",{class:"btn btn-sm btn-ghost",title:"Rename everywhere",onclick:()=>renameName(which,name)},svgIcon("edit")),
+        el("button",{class:"btn btn-sm btn-ghost",title:"Remove from list",onclick:()=>removeName(which,name,counts.get(name)||0)},svgIcon("trash")))));
+    };
+    filter.addEventListener("input",paint);paint();
+    body.append(el("div",{class:"card-body",style:"display:flex;flex-direction:column;gap:14px"},
+      el("div",{style:"display:flex;gap:11px;flex-wrap:wrap;align-items:flex-end"},
+        el("label",{class:"field",style:"flex:2 1 260px"},"Add",input),
+        el("button",{class:"btn btn-primary",onclick:async()=>{
+          const v=input.value.trim();if(!v)return;
+          if(list.includes(v)){toast("Already on the list");return;}
+          list.push(v);list.sort();input.value="";
+          await enqueue(()=>saveRefs(which));toast("Added "+v);render();}},svgIcon("plus"),"Add"),
+        el("label",{class:"field",style:"flex:1 1 200px"},"Filter",filter)),
+      el("div",{class:"hint"},which==="colors"
+        ?"Colours were split out of the recorded purchase item names — “50/24 (BLACK)” became item 50/24, colour BLACK. Merge two spellings by renaming one to the other."
+        :"These lists feed the type-ahead on every form and filter. Renaming here updates every stored record that uses the old name — that is how you merge two spellings of the same name into one.")),
+      listBox);
+  }
+  root.append(el("div",{class:"card"},nav,body));
+}
+/* Renaming a reference name rewrites it through every stored record on that
+   side, which is also how two spellings of one name get merged into one. */
+async function renameName(which,oldName){
+  const next=await askText("Rename everywhere","New name",oldName);
+  if(next==null)return;
+  const v=next.trim();if(!v||v===oldName)return;
+  await ensureHistory();
+  const ref=REFS[which],field=ref.field,sales=ref.side==="sales";
+  const months=sales?S.months:S.pmonths,touched=new Set();
+  for(const[k,m]of months){let hit=false;m.rows.forEach(r=>{if(r[field]===oldName){r[field]=v;hit=true;}});if(hit)touched.add(k);}
+  const orders=(sales?S.orders:S.porders).filter(o=>o[field]===oldName);orders.forEach(o=>o[field]=v);
+  const list=ref.get();
+  const i=list.indexOf(oldName);if(i>=0)list.splice(i,1);
+  if(!list.includes(v))list.push(v);
+  list.sort();invalidate();
+  await enqueue(async()=>{
+    for(const k of touched)await(sales?saveMonth(k):savePMonth(k));
+    for(const o of orders)await(sales?saveOrderDoc(o):savePOrderDoc(o));
+    await saveRefs(which);});
+  toast(`Renamed in ${touched.size} month${touched.size===1?"":"s"}${orders.length?" and "+orders.length+" order(s)":""}`);
+  render();
+}
+async function removeName(which,name,count){
+  const noun=REFS[which].side==="sales"?"delivery":"receipt";
+  if(count>0){await note("Still in use",
+    `“${name}” is used by ${nf(count)} stored ${count===1?noun:noun+"s"}. Rename it instead — removing it from the list would only make it reappear.`);return;}
+  const list=REFS[which].get();
+  const i=list.indexOf(name);if(i<0)return;
+  list.splice(i,1);await enqueue(()=>saveRefs(which));toast("Removed "+name);render();
+}
+function backupJSON(){
+  download("yarn-dispatch-backup-"+todayISO()+".json",JSON.stringify({
+    exportedAt:new Date().toISOString(),meta:S.meta,
+    clients:S.clients,items:S.items,suppliers:S.suppliers,pitems:S.pitems,colors:S.colors,
+    orders:S.orders,porders:S.porders,
+    deliveries:[...S.months.values()].sort((a,b)=>a.month<b.month?-1:1),
+    purchases:[...S.pmonths.values()].sort((a,b)=>a.month<b.month?-1:1)},null,1));
+}
+
+/* ============ PURCHASE / INCOMING ============
+   Mirrors the sales side: a register of what arrived, and an order book of what
+   was contracted for. Kept as its own set of documents (purchases/ and porders/)
+   rather than folded into deliveries, because an incoming line is counted in
+   bags-or-cartons-or-pallets and carries a colour, which a challan line does not. */
+const PUNITS=["BAG","CTN","PLT","CONE","BOX","GITTI","CHAKKA","KG"];
+const pKg=r=>r.kg||0, pLbs=r=>r.lbs||(r.kg?r.kg*KG_TO_LBS:0);
+function filterPRows({supplier,item,color,from,to,q}){
+  const ql=(q||"").trim().toLowerCase();
+  return allPRows().filter(r=>{
+    if(supplier&&r.supplier!==supplier)return false;
+    if(item&&r.item!==item)return false;
+    if(color&&(r.color||"")!==color)return false;
+    if(from&&r.date<from)return false;
+    if(to&&r.date>to)return false;
+    if(ql&&!((r.supplier+" "+r.item+" "+(r.color||"")+" "+(r.lot||"")+" "+(r.ref||"")+" "+(r.notes||"")).toLowerCase().includes(ql)))return false;
+    return true;
+  });
+}
+function pFilterContext(f){
+  const p=[];
+  if(f.supplier)p.push(f.supplier);if(f.item)p.push(f.item);if(f.color)p.push(f.color);
+  if(f.from||f.to)p.push((f.from?fmtDate(f.from):"start")+" to "+(f.to?fmtDate(f.to):"today"));
+  return p.length?p.join("  ·  "):"All suppliers · all items · full history";
+}
+const PUR_COLS=[{label:"Date",key:"date",type:"date",width:13},
+  {label:"Supplier",key:"supplier",type:"text",width:28},
+  {label:"Item / Yarn Spec",key:"item",type:"text",width:30},
+  {label:"Colour",key:"color",type:"text",width:14},
+  {label:"Lot Code",key:"lot",type:"text",width:14},
+  {label:"Qty",key:"qty",type:"dec",width:9},{label:"Unit",key:"unit",type:"text",width:8},
+  {label:"Per-Unit Wt",key:"uw",type:"text",width:12},
+  {label:"Weight (Kg)",key:"kg",type:"dec",width:13},{label:"Weight (Lbs)",key:"lbs",type:"dec",width:13},
+  {label:"Ref (D.O / Builty)",key:"ref",type:"text",width:18},
+  {label:"Notes",key:"notes",type:"text",width:22}];
+function exportPurchasesXlsx(rows,title,context,filename){
+  download(filename,buildXlsx({sheetName:"Purchases",title,context,cols:PUR_COLS,rows,
+    totals:{qty:sum(rows,"qty"),kg:sum(rows,"kg"),lbs:sum(rows,"lbs")}}));
+}
+function purchaseReport(rows,f,titleOverride){
+  const bySup=new Map(),byItem=new Map(),byMonth=new Map(),byColor=new Map();
+  const add=(map,k,r)=>{const e=map.get(k)||{k,n:0,qty:0,kg:0,lbs:0};
+    e.n++;e.qty+=r.qty||0;e.kg+=pKg(r);e.lbs+=pLbs(r);map.set(k,e);};
+  rows.forEach(r=>{add(byMonth,r.date.slice(0,7),r);add(bySup,r.supplier,r);
+    add(byItem,r.item,r);add(byColor,r.color||"— not recorded —",r);});
+  const cols=lbl=>[{label:lbl,key:"k"},{label:"Receipts",key:"n",align:"r",fmt:x=>nf(x.n)},
+    {label:"Qty",key:"qty",align:"r",fmt:x=>nf(x.qty)},
+    {label:"Kg",key:"kg",align:"r",fmt:x=>nf(x.kg,2)},{label:"Lbs",key:"lbs",align:"r",fmt:x=>nf(x.lbs,2)}];
+  const tot={n:nf(rows.length),qty:nf(sum(rows,"qty")),kg:nf(sum(rows,"kg"),2),lbs:nf(sum(rows,"lbs"),2)};
+  return reportHTML({
+    title:titleOverride||"Purchase & Incoming Report",
+    context:pFilterContext(f),
+    kpis:[{k:"Receipts",v:nf(rows.length),u:"incoming lines"},
+      {k:"Suppliers",v:nf(new Set(rows.map(r=>r.supplier)).size),u:"distinct"},
+      {k:"Weight in",v:nf(sum(rows,"kg"),0),u:"kg"},{k:"Weight in",v:nf(sum(rows,"lbs"),0),u:"lbs"}],
+    sections:[
+      {heading:"Incoming by month (most recent 18)",cols:cols("Month"),
+        rows:[...byMonth.values()].sort((a,b)=>a.k<b.k?1:-1).slice(0,18).map(x=>Object.assign({},x,{k:monthFull(x.k)})),totals:tot},
+      {heading:"Top suppliers by weight",cols:cols("Supplier"),rows:[...bySup.values()].sort((a,b)=>b.kg-a.kg).slice(0,15)},
+      {heading:"Top items by weight",cols:cols("Item"),rows:[...byItem.values()].sort((a,b)=>b.kg-a.kg).slice(0,15)},
+      {heading:"By colour",cols:cols("Colour"),rows:[...byColor.values()].sort((a,b)=>b.kg-a.kg).slice(0,20),
+        note:"Colour is split out of the recorded item name where it was written there; blank means it was never recorded."},
+      {heading:"Receipt detail",note:rows.length>1200?"Showing the 1,200 most recent of "+nf(rows.length)+" receipts.":null,
+        cols:[{label:"Date",key:"date",fmt:r=>fmtDate(r.date)},{label:"Supplier",key:"supplier"},
+          {label:"Item",key:"item"},{label:"Colour",key:"color",fmt:r=>r.color||"—"},
+          {label:"Lot",key:"lot",fmt:r=>r.lot||"—"},
+          {label:"Qty",key:"qty",align:"r",fmt:r=>r.qty==null?"—":nf(r.qty)+" "+(r.unit||"")},
+          {label:"Kg",key:"kg",align:"r",fmt:r=>nf(r.kg,2)},{label:"Lbs",key:"lbs",align:"r",fmt:r=>nf(r.lbs,2)},
+          {label:"Ref",key:"ref",fmt:r=>r.ref||"—"}],
+        rows:rows.slice(0,1200),
+        totals:{kg:nf(sum(rows,"kg"),2),lbs:nf(sum(rows,"lbs"),2),qty:nf(sum(rows,"qty"))}}],
+    footNote:"Purchase register — Yarn Dispatch Desk"});
+}
+
+/* ---------- register ---------- */
+function viewPurchases(root,acts){
+  const f=S.pur,rows=filterPRows(f);
+  head("Incoming","Purchase Register",`${nf(rows.length)} of ${nf(allPRows().length)} incoming lines`);
+  acts.append(
+    el("button",{class:"btn",onclick:()=>download("yarn-purchase-report.html",purchaseReport(rows,f))},svgIcon("doc"),"Report"),
+    el("button",{class:"btn",onclick:()=>exportPurchasesXlsx(rows,"Purchase Register",pFilterContext(f),"yarn-purchases.xlsx")},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn btn-primary",onclick:()=>editPurchase(null)},svgIcon("plus"),"Record receipt"));
+
+  root.append(el("div",{class:"filterbar"},
+    el("label",{class:"field grow"},"Search",el("input",{type:"search",placeholder:"D.O, builty, lot, note…",value:f.q,
+      oninput:e=>{f.q=e.target.value;f.page=1;repaintPurchases();}})),
+    comboField("Supplier",{value:f.supplier,list:S.suppliers,placeholder:"All suppliers",onChange:v=>{f.supplier=v;f.page=1;repaintPurchases();}}),
+    comboField("Item",{value:f.item,list:S.pitems,placeholder:"All items",onChange:v=>{f.item=v;f.page=1;repaintPurchases();}}),
+    comboField("Colour",{value:f.color,list:S.colors,placeholder:"All colours",onChange:v=>{f.color=v;f.page=1;repaintPurchases();}}),
+    el("label",{class:"field"},"From",el("input",{type:"date",value:f.from,onchange:e=>{f.from=e.target.value;f.page=1;repaintPurchases();}})),
+    el("label",{class:"field"},"To",el("input",{type:"date",value:f.to,onchange:e=>{f.to=e.target.value;f.page=1;repaintPurchases();}})),
+    el("button",{class:"btn btn-ghost",onclick:()=>{S.pur={q:"",supplier:"",item:"",color:"",from:"",to:"",page:1,size:f.size};render();}},"Reset")));
+
+  root.append(el("div",{id:"purTiles"}));
+  root.append(el("div",{id:"purTable"}));
+  repaintPurchases();
+}
+function repaintPurchases(){
+  const f=S.pur,rows=filterPRows(f);
+  const th=document.querySelector("#purTiles");
+  if(th){
+    th.textContent="";
+    const withCol=rows.filter(r=>r.color).length;
+    th.append(tileGroup("This selection",pFilterContext(f),[
+      tile("Receipts",nf(rows.length),"incoming lines","accent"),
+      tile("Weight in",nf(sum(rows,"kg"),0),"kg","accent"),
+      tile("Weight in",nf(sum(rows,"lbs"),0),"lbs"),
+      tile("Avg per receipt",nf(rows.length?sum(rows,"kg")/rows.length:0,1),"kg"),
+      tile("Suppliers",nf(new Set(rows.map(r=>r.supplier)).size),"distinct","brassy"),
+      tile("Items",nf(new Set(rows.map(r=>r.item)).size),"distinct","brassy"),
+      tile("Colours",nf(new Set(rows.filter(r=>r.color).map(r=>r.color)).size),
+        rows.length?Math.round(withCol/rows.length*100)+"% of lines tagged":"none yet","brassy"),
+      tile("Period",rows.length?monthLabel(rows[rows.length-1].date.slice(0,7))+" → "+monthLabel(rows[0].date.slice(0,7)):"—","covered","brassy")]));
+  }
+  const host=document.querySelector("#purTable");if(!host)return;
+  const pages=Math.max(1,Math.ceil(rows.length/f.size));
+  if(f.page>pages)f.page=pages;
+  const slice=rows.slice((f.page-1)*f.size,f.page*f.size);
+  host.textContent="";
+  const tb=el("tbody");
+  slice.forEach(r=>tb.append(el("tr",{class:"clickable",onclick:e=>{if(!e.target.closest("button"))viewReceipt(r);}},
+    el("td",null,fmtDate(r.date)),
+    el("td",null,r.supplier),
+    el("td",null,r.item),
+    el("td",null,r.color?el("span",{class:"chip col"},r.color):el("span",{class:"hint"},"—")),
+    el("td",null,r.lot?el("span",{class:"chip"},r.lot):"—"),
+    el("td",{class:"n"},r.qty==null?"—":nf(r.qty)),
+    el("td",{class:"mono",style:"font-size:11.5px;color:var(--muted)"},r.unit||"—"),
+    el("td",{class:"n"},nf(pKg(r),2)),el("td",{class:"n"},nf(pLbs(r),2)),
+    el("td",{class:"mono"},r.ref||"—"),
+    el("td",{style:"text-align:right;white-space:nowrap"},
+      el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Open / edit",onclick:()=>editPurchase(r)},svgIcon("edit")),
+      el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Delete",onclick:()=>removePurchase(r)},svgIcon("trash"))))));
+  const table=el("table",null,el("thead",null,el("tr",null,
+    el("th",null,"Date"),el("th",null,"Supplier"),el("th",null,"Item"),el("th",null,"Colour"),el("th",null,"Lot"),
+    el("th",{class:"n"},"Qty"),el("th",null,"Unit"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"),
+    el("th",null,"Ref"),el("th",null,""))),tb);
+  host.append(el("div",{class:"card"},el("div",{class:"tablewrap"},table),
+    rows.length?el("div",{class:"pager"},
+      `Rows ${((f.page-1)*f.size+1)}–${Math.min(f.page*f.size,rows.length)} of ${nf(rows.length)}`,
+      el("span",{class:"spacer"}),
+      el("button",{class:"btn btn-sm",disabled:f.page<=1?true:null,onclick:()=>{f.page--;repaintPurchases();}},"Prev"),
+      el("span",{class:"num"},`${f.page} / ${pages}`),
+      el("button",{class:"btn btn-sm",disabled:f.page>=pages?true:null,onclick:()=>{f.page++;repaintPurchases();}},"Next"),
+      el("select",{style:"width:auto",onchange:e=>{f.size=+e.target.value;f.page=1;repaintPurchases();}},
+        [25,50,100,250].map(n=>el("option",{value:n,selected:n===f.size?true:null},n+" / page"))))
+    :el("div",{class:"empty"},el("strong",null,"No receipts match"),"Try clearing the filters above.")));
+}
+
+/* ---------- read-only receipt ---------- */
+function viewReceipt(r){
+  const kv=(k,v)=>el("div",null,el("span",{class:"k"},k),el("span",{class:"v"},v||"—"));
+  openDrawer("Receipt · "+fmtDate(r.date),r.supplier+"  ·  "+r.item,host=>{
+    host.append(el("div",{class:"kv"},
+      kv("Date",fmtDate(r.date)),kv("Supplier",r.supplier),kv("Item",r.item),
+      kv("Colour",r.color),kv("Lot code",r.lot),
+      kv("Quantity",r.qty==null?"—":nf(r.qty)+" "+(r.unit||"")),
+      kv("Per-unit weight",r.uw),
+      kv("Net weight",nf(pKg(r),2)+" kg"),kv("Net weight",nf(pLbs(r),2)+" lbs"),
+      kv("Reference",r.ref)));
+    if(r.pbl&&r.pbl.length){
+      const tb=el("tbody");
+      r.pbl.forEach((w,i)=>tb.append(el("tr",null,el("td",{class:"ix"},String(i+1)),el("td",{class:"n"},nf(w,2)+" kg"))));
+      host.append(el("div",{class:"card"},
+        el("div",{class:"card-head"},el("h2",null,"Weights recorded"),
+          el("span",{class:"hint"},r.pbl.length+" units · "+nf(r.pbl.reduce((s,x)=>s+x,0),2)+" kg")),
+        el("div",{class:"tablewrap",style:"max-height:300px;overflow:auto"},
+          el("table",{class:"bagtable"},el("thead",null,el("tr",null,el("th",null,"#"),el("th",{class:"n"},"Weight"))),tb))));
+    }
+    if(r.notes)host.append(el("div",{class:"notice"},r.notes));
+    if(r.src==="import")host.append(el("div",{class:"hint"},
+      "Imported from the incoming workbook"+(r.raw&&r.raw!==r.item?" — recorded there as “"+r.raw+"”":"")+"."));
+  },[
+    el("button",{class:"btn",onclick:()=>editPurchase(r)},svgIcon("edit"),"Edit"),
+    el("button",{class:"btn btn-danger",onclick:()=>removePurchase(r)},svgIcon("trash"),"Delete")]);
+}
+
+/* ---------- entry form ---------- */
+function editPurchase(edit){
+  const src=edit||{};
+  const st={pbl:(src.pbl||[]).map(w=>w==null?"":w)};
+  const F={};
+  F.date=el("input",{type:"date",value:src.date||todayISO()});
+  F.lot=el("input",{value:src.lot||"",placeholder:"e.g. LOT#43508"});
+  F.ref=el("input",{value:src.ref||"",placeholder:"D.O / builty / challan no."});
+  F.uw=el("input",{value:src.uw||"",placeholder:"e.g. 100  or  UNEVEN"});
+  F.notes=el("textarea",{placeholder:"Anything worth remembering about this receipt"},src.notes||"");
+  F.unit=el("select",null,PUNITS.map(u=>el("option",{value:u,selected:u===(src.unit||"BAG")?true:null},u)));
+  F.qty=el("input",{type:"number",step:"0.01",inputmode:"decimal",value:src.qty==null?"":src.qty,placeholder:"0"});
+  F.kg=el("input",{type:"number",step:"0.01",inputmode:"decimal",value:src.kg==null?"":src.kg,placeholder:"0.00"});
+  F.lbs=el("input",{type:"number",step:"0.01",inputmode:"decimal",value:src.lbs==null?"":src.lbs,placeholder:"0.00"});
+  F.supC=combo({value:src.supplier||"",list:S.suppliers,placeholder:"Type a supplier…",allowFree:true,onChange:v=>paintPOrders(v)});
+  F.itemC=combo({value:src.item||"",list:S.pitems,placeholder:"Type an item…",allowFree:true,onChange:()=>{}});
+  F.colC=combo({value:src.color||"",list:S.colors,placeholder:"Leave blank if not recorded",allowFree:true,onChange:()=>{}});
+  F.orderSel=el("select",null);
+
+  function paintPOrders(sup){
+    const os=S.porders.filter(o=>o.supplier===sup&&!isClosed(o));
+    F.orderSel.textContent="";
+    F.orderSel.append(el("option",{value:""},os.length?"— not linked —":"— no open purchase orders for this supplier —"));
+    os.forEach(o=>F.orderSel.append(el("option",{value:o.id,selected:o.id===(src.orderId||"")?true:null},
+      `${o.id} · ${o.item}${o.color?" ("+o.color+")":""}${o.po?" · PO "+o.po:""}`)));
+  }
+  paintPOrders(src.supplier||"");
+  F.orderSel.addEventListener("change",()=>{
+    const o=S.porders.find(x=>x.id===F.orderSel.value);if(!o)return;
+    F.itemC.setValue(o.item);
+    if(o.color)F.colC.setValue(o.color);
+    if(o.lot&&!F.lot.value)F.lot.value=o.lot;
+    if(o.unit)F.unit.value=o.unit;
+    toast("Filled from "+o.id);
+  });
+
+  /* kg is the number of record; lbs mirrors it, and either one can be typed */
+  let syncing=false;
+  const syncFromKg=()=>{if(syncing)return;syncing=true;
+    const k=num(F.kg.value);F.lbs.value=k==null?"":(k*KG_TO_LBS).toFixed(2);syncing=false;paintTotals();};
+  const syncFromLbs=()=>{if(syncing)return;syncing=true;
+    const l=num(F.lbs.value);F.kg.value=l==null?"":(l/KG_TO_LBS).toFixed(3);syncing=false;paintTotals();};
+  F.kg.addEventListener("input",syncFromKg);
+  F.lbs.addEventListener("input",syncFromLbs);
+  /* qty x a numeric per-unit weight is how the clerk's book gets its total, so
+     fill kg from those two whenever both are numbers and kg is still untouched */
+  const tryDerive=()=>{
+    const q=num(F.qty.value),u=num(F.uw.value);
+    if(q!=null&&u!=null&&!filledW().length){F.kg.value=(q*u).toFixed(2);syncFromKg();}
+  };
+  F.qty.addEventListener("input",tryDerive);
+  F.uw.addEventListener("input",tryDerive);
+
+  const tbody=el("tbody"),tUnits=el("span",{class:"v"}),tKg=el("span",{class:"v"}),tLbs=el("span",{class:"v"});
+  const filledW=()=>st.pbl.filter(w=>w!==""&&w!=null&&!isNaN(parseFloat(w)));
+  function paintTotals(){
+    const f=filledW();
+    if(f.length){
+      const kg=f.reduce((s,w)=>s+parseFloat(w),0);
+      tUnits.textContent=nf(f.length);tKg.textContent=nf(kg,2);tLbs.textContent=nf(kg*KG_TO_LBS,2);
+    }else{
+      const k=num(F.kg.value)||0;
+      tUnits.textContent=F.qty.value===""?"—":nf(num(F.qty.value));
+      tKg.textContent=nf(k,2);tLbs.textContent=nf(k*KG_TO_LBS,2);
+    }
+    manual.hidden=filledW().length>0;
+  }
+  const manual=el("div",{class:"hint",style:"padding:0 2px"},
+    "Uneven bags? Add them below and the totals take over from the boxes above.");
+  function focusW(i){const rows=tbody.querySelectorAll("tr");if(rows[i]){const inp=rows[i].querySelector("input");if(inp)inp.focus();}}
+  function paintW(){
+    tbody.textContent="";
+    st.pbl.forEach((w,i)=>{
+      const inp=el("input",{type:"number",step:"0.01",inputmode:"decimal",value:w,placeholder:"0.00",
+        oninput:e=>{st.pbl[i]=e.target.value;paintTotals();}});
+      inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();
+        if(i===st.pbl.length-1)addW();else focusW(i+1);}});
+      tbody.append(el("tr",null,el("td",{class:"ix"},String(i+1)),el("td",null,inp),
+        el("td",{class:"rm"},el("button",{class:"btn btn-sm btn-ghost",title:"Remove",tabindex:"-1",
+          onclick:()=>{st.pbl.splice(i,1);paintW();}},svgIcon("trash")))));
+    });
+    paintTotals();
+  }
+  function addW(){st.pbl.push("");paintW();focusW(st.pbl.length-1);}
+  paintW();
+
+  const status=el("div",{class:"formerr",hidden:true});
+  const flag=node=>{
+    const t=node&&(node.tagName==="INPUT"||node.tagName==="SELECT"?node:node.querySelector("input"));
+    if(!t)return;
+    t.classList.add("bad");t.scrollIntoView({block:"center",behavior:"smooth"});
+    setTimeout(()=>t.focus(),160);setTimeout(()=>t.classList.remove("bad"),2600);
+  };
+  async function save(){
+    const w=filledW().map(x=>parseFloat(x));
+    const kg=w.length?w.reduce((s,x)=>s+x,0):num(F.kg.value);
+    const rec={date:F.date.value,supplier:F.supC.getValue(),item:F.itemC.getValue(),
+      color:F.colC.getValue(),lot:F.lot.value.trim(),ref:F.ref.value.trim(),
+      qty:w.length?w.length:num(F.qty.value),unit:F.unit.value,uw:F.uw.value.trim(),
+      notes:F.notes.value.trim(),orderId:F.orderSel.value||"",
+      pbl:w,kg:kg||null,lbs:kg?+(kg*KG_TO_LBS).toFixed(4):null};
+    const fail=(m,node)=>{status.textContent=m;status.hidden=false;toast(m);flag(node);};
+    if(!rec.date)return fail("Enter the date this stock arrived.",F.date);
+    if(!rec.supplier)return fail("Enter the supplier — a receipt can't be saved without one.",F.supC);
+    if(!rec.item)return fail("Enter the item / yarn spec.",F.itemC);
+    if(!rec.kg)return fail("Enter the net weight, or add the individual weights below.",F.kg);
+    status.hidden=true;status.textContent="";
+    const dupe=allPRows().find(x=>x.ref&&rec.ref&&String(x.ref)===rec.ref&&x.date===rec.date&&x.supplier===rec.supplier&&(!edit||x.id!==edit.id));
+    if(dupe&&!await ask("Reference already recorded",
+      `${rec.ref} on ${fmtDate(rec.date)} from ${rec.supplier} is already in the register. Save this one anyway?`,
+      "Save anyway"))return;
+    try{
+      if(edit)await updatePurchase(edit.id,rec);else await addPurchase(rec);
+      closeDrawer();render();
+    }catch(e){console.error(e);fail("Could not save: "+((e&&e.message)||e)+" — nothing was lost, try again.");}
+  }
+
+  const saveBtn=el("button",{class:"btn btn-primary",onclick:()=>save()},svgIcon("plus"),edit?"Save changes":"Save receipt");
+  openDrawer(edit?"Edit receipt":"Record incoming stock",
+    edit?edit.supplier+" · "+fmtDate(edit.date):"What arrived at the gate",host=>{
+    host.append(
+      el("div",{class:"card"},
+        el("div",{class:"card-head"},el("h2",null,"Receipt"),
+          el("span",{class:"hint"},"Supplier, item and colour — colour is what makes the same yarn tell itself apart")),
+        el("div",{class:"card-body"},el("div",{class:"formgrid"},
+          el("label",{class:"field req"},"Date in",el("span",{class:"rq"},"*"),F.date),
+          el("label",{class:"field"},"Ref (D.O / builty)",F.ref),
+          el("label",{class:"field req",style:"grid-column:span 2"},"Supplier",el("span",{class:"rq"},"*"),F.supC),
+          el("label",{class:"field",style:"grid-column:span 2"},"Link to purchase order",F.orderSel),
+          el("label",{class:"field req",style:"grid-column:span 2"},"Item / yarn spec",el("span",{class:"rq"},"*"),F.itemC),
+          el("label",{class:"field"},"Colour",F.colC),
+          el("label",{class:"field"},"Lot code",F.lot),
+          el("label",{class:"field",style:"grid-column:1/-1"},"Notes",F.notes)))),
+      el("div",{class:"card"},
+        el("div",{class:"card-head"},el("h2",null,"Quantity received"),
+          el("span",{class:"hint"},"Qty × per-unit weight fills the kilos; kg and lbs stay in step")),
+        el("div",{class:"card-body",style:"display:flex;flex-direction:column;gap:13px"},
+          el("div",{class:"formgrid"},
+            el("label",{class:"field"},"Quantity",F.qty),
+            el("label",{class:"field"},"Unit",F.unit),
+            el("label",{class:"field"},"Per-unit weight",F.uw),
+            el("label",{class:"field req"},"Net weight (kg)",el("span",{class:"rq"},"*"),F.kg),
+            el("label",{class:"field"},"Net weight (lbs)",F.lbs)),
+          manual)),
+      el("div",{class:"card"},
+        el("div",{class:"card-head"},el("h2",null,"Individual weights"),
+          el("span",{class:"hint"},"Only for uneven lots — Enter starts the next line"),
+          el("button",{class:"btn btn-sm btn-primary",onclick:addW},svgIcon("plus"),"Add weight")),
+        el("div",{class:"tablewrap",style:"max-height:300px;overflow:auto"},
+          el("table",{class:"bagtable"},el("thead",null,el("tr",null,
+            el("th",null,"#"),el("th",null,"Weight (kg)"),el("th",null,""))),tbody)),
+        el("div",{class:"bagfoot"},
+          el("div",{class:"ft"},el("span",{class:"k"},"Units"),tUnits),
+          el("div",{class:"ft"},el("span",{class:"k"},"Total kg"),tKg),
+          el("div",{class:"ft"},el("span",{class:"k"},"Total lbs"),tLbs),
+          el("div",{class:"grow"}))),
+      status);
+    paintTotals();
+  },[saveBtn]);
+}
+
+/* ---------- writes ---------- */
+function learnPNames(rec){
+  let touched=[];
+  const push=(w,v)=>{if(!v)return;const l=REFS[w].get();if(!l.includes(v)){l.push(v);l.sort();touched.push(w);}};
+  push("suppliers",rec.supplier);push("pitems",rec.item);push("colors",rec.color);
+  touched.forEach(w=>enqueue(()=>saveRefs(w)));
+}
+async function addPurchase(rec){
+  await ensureHistory();
+  const key=rec.date.slice(0,7);
+  if(!S.pmonths.has(key))S.pmonths.set(key,{month:key,rows:[]});
+  S.pmonths.get(key).rows.push(Object.assign({id:uid("p"),src:"app"},rec));
+  invalidate();learnPNames(rec);
+  enqueue(()=>savePMonth(key));
+  toast("Recorded · "+rec.supplier+" · "+nf(rec.kg,2)+" kg");
+}
+async function updatePurchase(id,rec){
+  await ensureHistory();
+  let oldKey=null;for(const[k,m]of S.pmonths)if(m.rows.some(r=>r.id===id))oldKey=k;
+  if(!oldKey)return;
+  const newKey=rec.date.slice(0,7),m=S.pmonths.get(oldKey),i=m.rows.findIndex(r=>r.id===id);
+  const merged=Object.assign({},m.rows[i],rec);
+  if(newKey===oldKey){m.rows[i]=merged;invalidate();learnPNames(rec);enqueue(()=>savePMonth(oldKey));}
+  else{m.rows.splice(i,1);
+    if(!S.pmonths.has(newKey))S.pmonths.set(newKey,{month:newKey,rows:[]});
+    S.pmonths.get(newKey).rows.push(merged);invalidate();learnPNames(rec);
+    enqueue(async()=>{await savePMonth(oldKey);await savePMonth(newKey);});}
+  toast("Receipt updated");
+}
+async function removePurchase(r){
+  const ok=await ask("Delete this receipt?",
+    `${r.supplier} · ${r.item} · ${fmtDate(r.date)} · ${nf(pKg(r),2)} kg. This cannot be undone.`,"Delete",true);
+  if(!ok)return;
+  const key=r.date.slice(0,7),m=S.pmonths.get(key);if(!m)return;
+  m.rows=m.rows.filter(x=>x.id!==r.id);invalidate();
+  enqueue(()=>savePMonth(key));
+  toast("Receipt deleted");closeDrawer();render();
+}
+
+/* ---------- purchase orders ---------- */
+function pOrderMatches(o,r){
+  if(r.supplier!==o.supplier||r.item!==o.item)return false;
+  if(o.color&&(r.color||"")!==o.color)return false;
+  const lot=(o.lot||"").trim().toLowerCase();
+  if(lot&&!String(r.lot||"").toLowerCase().includes(lot))return false;
+  if(o.dateOpened&&r.date<o.dateOpened)return false;
+  if(o.closingDate&&r.date>o.closingDate)return false;
+  return true;
+}
+function pOrderStats(o){
+  const rows=allPRows().filter(r=>pOrderMatches(o,r));
+  const qty=sum(rows,"qty"),kg=sum(rows,"kg"),lbs=sum(rows,"lbs");
+  const cq=o.contractedQty||0,ck=o.contractedKg||0;
+  const pct=ck>0?Math.min(100,kg/ck*100):(cq>0?Math.min(100,qty/cq*100):0);
+  return{rows,qty,kg,lbs,openQty:cq-qty,openKg:ck-kg,pct,done:(ck>0&&kg>=ck)||(cq>0&&qty>=cq)};
+}
+function pOrderBadge(o,st){
+  if(isClosed(o))return{cls:"b-closed",txt:"Closed",stripe:"stripe-off"};
+  if(st.done)return{cls:"b-done",txt:"Received",stripe:"stripe-ok"};
+  return{cls:"b-open",txt:"Open",stripe:"stripe"};
+}
+function exportPOrdersXlsx(){
+  const cols=[{label:"Order",key:"id",type:"text",width:12},{label:"Supplier PO / Ref",key:"po",type:"text",width:18},
+    {label:"Supplier",key:"supplier",type:"text",width:28},{label:"Item",key:"item",type:"text",width:28},
+    {label:"Colour",key:"color",type:"text",width:14},{label:"Lot",key:"lot",type:"text",width:12},
+    {label:"Opened",key:"dateOpened",type:"date",width:13},{label:"Status",key:"status",type:"text",width:11},
+    {label:"Contracted Qty",key:"contractedQty",type:"dec",width:14},{label:"Unit",key:"unit",type:"text",width:8},
+    {label:"Received Qty",key:"rQty",type:"dec",width:13},{label:"Open Qty",key:"oQty",type:"dec",width:11},
+    {label:"Contracted Kg",key:"contractedKg",type:"dec",width:14},{label:"Received Kg",key:"rKg",type:"dec",width:13},
+    {label:"Open Kg",key:"oKg",type:"dec",width:11},{label:"% Received",key:"pct",type:"int",width:12}];
+  const rows=S.porders.map(o=>{const st=pOrderStats(o);
+    return Object.assign({},o,{rQty:st.qty,oQty:Math.max(0,st.openQty),rKg:st.kg,oKg:Math.max(0,st.openKg),pct:Math.round(st.pct)});});
+  download("yarn-purchase-orders.xlsx",buildXlsx({sheetName:"Purchase Orders",title:"Purchase Order Book",
+    context:"As at "+fmtDate(todayISO()),cols,rows,
+    totals:{contractedQty:sum(rows,"contractedQty"),rQty:sum(rows,"rQty"),oQty:sum(rows,"oQty"),
+      contractedKg:sum(rows,"contractedKg"),rKg:sum(rows,"rKg"),oKg:sum(rows,"oKg")}}));
+}
+function viewPOrders(root,acts){
+  const stats=S.porders.map(o=>({o,st:pOrderStats(o)}));
+  const open=stats.filter(x=>!isClosed(x.o));
+  head("Contracts","Purchase Orders",`${open.length} open · ${nf(open.reduce((s,x)=>s+Math.max(0,x.st.openKg),0),0)} kg still to arrive`);
+  acts.append(
+    el("button",{class:"btn",onclick:exportPOrdersXlsx},svgIcon("grid"),"Excel"),
+    el("button",{class:"btn btn-primary",onclick:()=>editPOrder(null)},svgIcon("plus"),"New purchase order"));
+
+  const cKg=open.reduce((s,x)=>s+(x.o.contractedKg||0),0),rKg=open.reduce((s,x)=>s+x.st.kg,0);
+  const cQ=open.reduce((s,x)=>s+(x.o.contractedQty||0),0),rQ=open.reduce((s,x)=>s+x.st.qty,0);
+  root.append(tileGroup("Open purchase orders","Everything not yet marked Closed",[
+    tile("Orders open",nf(open.length),"contracts","accent"),
+    tile("Contracted",nf(cQ),"units"),
+    tile("Received",nf(rQ),"units"),
+    tile("Still to arrive",nf(Math.max(0,cQ-rQ)),"units","accent")]));
+  root.append(tileGroup("By weight",null,[
+    tile("Contracted",nf(cKg,0),"kg"),
+    tile("Received",nf(rKg,0),"kg"),
+    tile("Still to arrive",nf(Math.max(0,cKg-rKg),0),"kg","accent"),
+    tile("Received",cKg>0?Math.round(rKg/cKg*100)+"%":"—","of contracted kg","accent")]));
+
+  if(!S.porders.length){
+    root.append(el("div",{class:"card"},el("div",{class:"empty"},
+      el("strong",null,"No purchase orders yet"),
+      "Add one and every matching receipt is counted against it automatically — same rule as the sales side.")));
+    return;
+  }
+  const showAll=S.pord.show==="all";
+  const list=(showAll?stats:open).slice().sort((a,b)=>{
+    const ac=isClosed(a.o),bc=isClosed(b.o);
+    if(ac!==bc)return ac?1:-1;return b.st.openKg-a.st.openKg;});
+  const tb=el("tbody");
+  list.forEach(({o,st})=>{
+    const b=pOrderBadge(o,st);
+    tb.append(el("tr",{class:"clickable "+b.stripe,onclick:e=>{if(!e.target.closest("button"))openPOrder(o.id);}},
+      el("td",{class:"mono"},o.id,o.po?el("span",{class:"hint",style:"display:block;font-size:10.5px"},"Ref "+o.po):null),
+      el("td",null,o.supplier),
+      el("td",null,o.item,o.color?el("span",{class:"chip col",style:"margin-left:6px"},o.color):null),
+      el("td",null,o.lot?el("span",{class:"chip"},o.lot):el("span",{class:"hint"},"any")),
+      el("td",null,fmtDate(o.dateOpened)),
+      el("td",{class:"n"},nf(o.contractedQty)+" "+(o.unit||""),el("br"),el("span",{class:"hint num"},nf(o.contractedKg,0)+" kg")),
+      el("td",{class:"n"},nf(st.qty),el("br"),el("span",{class:"hint num"},nf(st.kg,0)+" kg")),
+      el("td",{class:"n"},nf(Math.max(0,st.openQty)),el("br"),el("span",{class:"hint num"},nf(Math.max(0,st.openKg),0)+" kg")),
+      el("td",null,progress(st.pct)),el("td",null,el("span",{class:"badge "+b.cls},b.txt)),
+      el("td",{style:"text-align:right"},el("button",{class:"btn btn-sm btn-ghost rowbtn",title:"Edit",onclick:()=>editPOrder(o)},svgIcon("edit")))));
+  });
+  root.append(el("div",{class:"card"},
+    el("div",{class:"card-head"},el("h2",null,"Purchase order book"),
+      el("span",{class:"hint"},"Click any order to see every receipt counted against it"),
+      el("button",{class:"btn btn-sm",onclick:()=>{S.pord.show=showAll?"open":"all";render();}},showAll?"Show open only":"Show closed too")),
+    el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+      el("th",null,"Order"),el("th",null,"Supplier"),el("th",null,"Item"),el("th",null,"Lot"),el("th",null,"Opened"),
+      el("th",{class:"n"},"Contracted"),el("th",{class:"n"},"Received"),el("th",{class:"n"},"Open"),
+      el("th",null,"Progress"),el("th",null,"Status"),el("th",null,""))),tb))));
+  root.append(el("div",{class:"notice"},
+    "A receipt counts toward a purchase order when the supplier and item match, the colour matches (blank colour on the order = any colour), the lot matches (blank = any lot), and the date is on or after the order date."));
+}
+function openPOrder(id){
+  const o=S.porders.find(x=>x.id===id);if(!o)return;
+  const st=pOrderStats(o);
+  openDrawer(o.id,o.supplier+"  ·  "+o.item+(o.color?"  ·  "+o.color:""),host=>{
+    const kv=(k,v)=>el("div",null,el("span",{class:"k"},k),el("span",{class:"v"},v||"—"));
+    host.append(el("div",{class:"kv"},
+      kv("Supplier",o.supplier),kv("Item",o.item),kv("Colour",o.color),kv("Lot",o.lot||"any"),
+      kv("Supplier ref / PO",o.po),kv("Opened",fmtDate(o.dateOpened)),
+      kv("Closing date",o.closingDate?fmtDate(o.closingDate):"open-ended"),
+      kv("Status",isClosed(o)?"Closed":st.done?"Received in full":"Open")));
+    host.append(el("div",{class:"tiles t4"},
+      tile("Contracted",nf(o.contractedQty)+" "+(o.unit||""),nf(o.contractedKg,0)+" kg"),
+      tile("Received",nf(st.qty),nf(st.kg,0)+" kg","accent"),
+      tile("Still to arrive",nf(Math.max(0,st.openQty)),nf(Math.max(0,st.openKg),0)+" kg"),
+      tile("Progress",Math.round(st.pct)+"%","of contracted","brassy")));
+    if(!st.rows.length){
+      host.append(el("div",{class:"card"},el("div",{class:"empty"},
+        el("strong",null,"Nothing received yet"),"Receipts matching this supplier and item will appear here.")));
+      return;
+    }
+    const tb=el("tbody");
+    st.rows.forEach(r=>tb.append(el("tr",{class:"clickable",onclick:()=>viewReceipt(r)},
+      el("td",null,fmtDate(r.date)),el("td",{class:"mono"},r.ref||"—"),
+      el("td",null,r.color?el("span",{class:"chip col"},r.color):"—"),
+      el("td",null,r.lot?el("span",{class:"chip"},r.lot):"—"),
+      el("td",{class:"n"},r.qty==null?"—":nf(r.qty)+" "+(r.unit||"")),
+      el("td",{class:"n"},nf(pKg(r),2)),el("td",{class:"n"},nf(pLbs(r),2)))));
+    host.append(el("div",{class:"card"},
+      el("div",{class:"card-head"},el("h2",null,"Receipts against this order"),
+        el("span",{class:"hint"},st.rows.length+" receipts")),
+      el("div",{class:"tablewrap"},el("table",null,el("thead",null,el("tr",null,
+        el("th",null,"Date"),el("th",null,"Ref"),el("th",null,"Colour"),el("th",null,"Lot"),
+        el("th",{class:"n"},"Qty"),el("th",{class:"n"},"Kg"),el("th",{class:"n"},"Lbs"))),tb,
+        el("tfoot",null,el("tr",null,el("th",{colspan:"4"},"TOTAL"),
+          el("th",{class:"n"},nf(st.qty)),el("th",{class:"n"},nf(st.kg,2)),el("th",{class:"n"},nf(st.lbs,2))))))));
+  },[el("button",{class:"btn",onclick:()=>editPOrder(o)},svgIcon("edit"),"Edit order")]);
+}
+function editPOrder(o){
+  const isNew=!o,src=o||{};
+  const F={};
+  F.po=el("input",{value:src.po||"",placeholder:"supplier's ref — optional"});
+  F.lot=el("input",{value:src.lot||"",placeholder:"blank = any lot"});
+  F.opened=el("input",{type:"date",value:src.dateOpened||todayISO()});
+  F.closing=el("input",{type:"date",value:src.closingDate||""});
+  F.qty=el("input",{type:"number",step:"0.01",value:src.contractedQty==null?"":src.contractedQty,placeholder:"0"});
+  F.unit=el("select",null,PUNITS.map(u=>el("option",{value:u,selected:u===(src.unit||"BAG")?true:null},u)));
+  F.kg=el("input",{type:"number",step:"0.01",value:src.contractedKg==null?"":src.contractedKg,placeholder:"0.00"});
+  F.status=el("select",null,["Open","Closed"].map(s=>el("option",{value:s,selected:s===(src.status||"Open")?true:null},s)));
+  F.notes=el("textarea",{placeholder:"Terms, rate agreed, anything worth keeping"},src.notes||"");
+  F.supC=combo({value:src.supplier||"",list:S.suppliers,placeholder:"Type a supplier…",allowFree:true,onChange:()=>{}});
+  F.itemC=combo({value:src.item||"",list:S.pitems,placeholder:"Type an item…",allowFree:true,onChange:()=>{}});
+  F.colC=combo({value:src.color||"",list:S.colors,placeholder:"blank = any colour",allowFree:true,onChange:()=>{}});
+  const status=el("div",{class:"formerr",hidden:true});
+  const save=async()=>{
+    const rec={supplier:F.supC.getValue(),item:F.itemC.getValue(),color:F.colC.getValue(),
+      lot:F.lot.value.trim(),po:F.po.value.trim(),dateOpened:F.opened.value,closingDate:F.closing.value,
+      contractedQty:num(F.qty.value),unit:F.unit.value,contractedKg:num(F.kg.value),
+      status:F.status.value,notes:F.notes.value.trim()};
+    const fail=m=>{status.textContent=m;status.hidden=false;toast(m);};
+    if(!rec.supplier)return fail("Enter the supplier.");
+    if(!rec.item)return fail("Enter the item.");
+    if(!rec.dateOpened)return fail("Enter the date this order was placed.");
+    if(!rec.contractedQty&&!rec.contractedKg)return fail("Enter a contracted quantity or weight — otherwise there is nothing to track against.");
+    status.hidden=true;
+    let ord;
+    if(isNew){
+      const seq=S.meta.nextPOrderSeq||(S.porders.length+1);
+      ord=Object.assign({id:"PO-"+String(seq).padStart(4,"0"),createdAt:todayISO()},rec);
+      S.porders.push(ord);S.meta=Object.assign({},S.meta,{nextPOrderSeq:seq+1});
+      enqueue(async()=>{await savePOrderDoc(ord);await saveMeta();});
+      toast("Purchase order "+ord.id+" created");
+    }else{ord=Object.assign(o,rec);enqueue(()=>savePOrderDoc(ord));toast(ord.id+" updated");}
+    learnPNames(rec);closeDrawer();render();
+  };
+  openDrawer(isNew?"New purchase order":"Edit "+src.id,isNew?"Contract stock in from a supplier":src.supplier,host=>{
+    host.append(el("div",{class:"card"},el("div",{class:"card-body",style:"display:flex;flex-direction:column;gap:15px"},
+      el("div",{class:"formgrid"},
+        el("label",{class:"field req",style:"grid-column:span 2"},"Supplier",el("span",{class:"rq"},"*"),F.supC),
+        el("label",{class:"field"},"Supplier ref / PO no.",F.po),
+        el("label",{class:"field req",style:"grid-column:span 2"},"Item / yarn spec",el("span",{class:"rq"},"*"),F.itemC),
+        el("label",{class:"field"},"Colour",F.colC),
+        el("label",{class:"field"},"Lot",F.lot),
+        el("label",{class:"field req"},"Date placed",el("span",{class:"rq"},"*"),F.opened),
+        el("label",{class:"field"},"Closing date",F.closing),
+        el("label",{class:"field"},"Contracted qty",F.qty),
+        el("label",{class:"field"},"Unit",F.unit),
+        el("label",{class:"field"},"Contracted kg",F.kg),
+        el("label",{class:"field"},"Status",F.status),
+        el("label",{class:"field",style:"grid-column:1/-1"},"Notes",F.notes)),
+      el("div",{class:"hint"},"Leave colour or lot blank and the order counts every colour or lot of that item from that supplier."),
+      status)));
+    if(!isNew)host.append(el("div",{class:"card"},el("div",{class:"card-body"},
+      el("button",{class:"btn btn-danger",onclick:async()=>{
+        if(!await ask("Delete this purchase order?",
+          `${src.id} · ${src.supplier} · ${src.item}. Receipts already recorded are not touched.`,"Delete",true))return;
+        S.porders=S.porders.filter(x=>x.id!==src.id);
+        await enqueue(()=>S.db.doc("porders/"+src.id).delete());
+        toast("Purchase order deleted");closeDrawer();render();}},svgIcon("trash"),"Delete this order"))));
+  },[el("button",{class:"btn btn-primary",onclick:save},isNew?"Create order":"Save changes")]);
+}
+
+/* ============ drawer ============ */
+function openDrawer(title,sub,build,actions){
+  closeDrawer();
+  const body=el("div",{class:"drawer-body"});
+  const dr=el("div",{class:"drawer",role:"dialog","aria-modal":"true","aria-label":title},
+    el("div",{class:"drawer-head"},
+      el("div",{style:"min-width:0"},el("h2",null,title),el("div",{class:"hint",style:"margin-top:3px"},sub||"")),
+      el("div",{style:"margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center"},
+        actions||[],el("button",{class:"btn btn-ghost",onclick:closeDrawer,title:"Close (Esc)"},svgIcon("x")))),
+    body);
+  build(body);
+  $("#drawerHost").append(el("div",{class:"scrim",onclick:closeDrawer}),dr);
+  document.body.style.overflow="hidden";
+  document.addEventListener("keydown",escClose);
+  const first=dr.querySelector("input,select,button");if(first)first.focus();
+}
+function escClose(e){if(e.key==="Escape")closeDrawer();}
+function closeDrawer(){
+  $("#drawerHost").textContent="";
+  document.body.style.overflow="";
+  document.removeEventListener("keydown",escClose);
+}
+
+/* ============ boot ============ */
+/* Nothing in this app is allowed to fail silently — a clerk mid-challan must
+   always see why a button did nothing. */
+window.addEventListener("error",e=>{
+  console.error(e.error||e.message);
+  setSave("error","Something went wrong");
+  toast("Error: "+(e.message||"see console"));
+});
+window.addEventListener("unhandledrejection",e=>{
+  const r=e.reason;console.error(r);
+  setSave("error","Something went wrong");
+  toast("Error: "+((r&&(r.message||r.code))||r));
+});
+initTheme();
+$("#themeBtn").addEventListener("click",toggleTheme);
+(async function boot(){
+  render();
+  let db=null,dl=null;
+  try{db=(window.claude&&claude.use)?await claude.use("db"):null;}catch(e){db=null;}
+  try{dl=(window.claude&&claude.use)?await claude.use("downloads"):null;}catch(e){dl=null;}
+  S.db=db;S.downloads=dl;
+  if(!db){S.loadError="no-db";setSave("error","Storage unavailable");render();return;}
+  try{
+    await loadCore();
+    S.ready=true;setSave("idle","All changes saved");
+    $("#dbInfo").textContent="Loading history…";
+    render();
+    S.histPromise=loadHistory().then(()=>{
+      $("#dbInfo").textContent=nf(allRows().length)+" deliveries · "+nf(allPRows().length)+" receipts";
+      render();
+    }).catch(e=>{console.error(e);setSave("error","History failed to load");});
+  }catch(e){console.error(e);S.loadError=String((e&&e.message)||e);setSave("error","Could not load");render();}
+})();
+</script>
+
+</body></html>
